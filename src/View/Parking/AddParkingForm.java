@@ -18,7 +18,7 @@ public class AddParkingForm extends javax.swing.JDialog {
      */
     private ParkingService parkingService;
     
-    public AddParkingForm(java.awt.Frame parent, boolean modal) {
+    public AddParkingForm(java.awt.Frame parent, boolean modal, ParkingService parkingService) {
         super(parent, modal);
         this.parkingService = new ParkingService();
         initComponents();
@@ -246,7 +246,7 @@ public class AddParkingForm extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                AddParkingForm dialog = new AddParkingForm(new javax.swing.JFrame(), true);
+                AddParkingForm dialog = new AddParkingForm(new javax.swing.JFrame(), true, new ParkingService());
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

@@ -25,16 +25,20 @@ public class BookFacilitiesForm extends javax.swing.JDialog {
     private final Color GREEN_AVAILABLE = new Color(165, 214, 167); // Màu có thể chọn
     private final Color BLUE_SELECTED = new Color(66, 165, 245);   // Màu đang chọn
     private final Color GRAY_UNAVAILABLE = Color.LIGHT_GRAY;        // Màu đã hết chỗ
+    private final Color YELLOW_ALREADY_BOOKED = Color.YELLOW; //Mau da chon truoc do
 
     private boolean confirmed = false;   // Cờ để biết người dùng có nhấn Confirm không
     
     private Facility facility;
     private FacilityService facilityService;
     
-    public BookFacilitiesForm(java.awt.Frame parent, boolean modal, Facility facility, FacilityService facilityService) {
+    private int currentInvoiceId;
+    
+    public BookFacilitiesForm(java.awt.Frame parent, boolean modal, Facility facility, FacilityService facilityService, int invoiceId) {
         super(parent, modal);
         this.facility = facility; // Lưu lại facility đang được book
         this.facilityService = facilityService; // Lưu lại service để kiểm tra
+        this.currentInvoiceId = invoiceId;
         
         initComponents();
         setLocationRelativeTo(parent);
@@ -45,22 +49,30 @@ public class BookFacilitiesForm extends javax.swing.JDialog {
     
     //Lặp qua tất cả các JLabel khung giờ, kiểm tra và cài đặt trạng thá
     private void updateAllSlotsStatus() {
-        // Lấy tất cả các component con trong panel chứa các khung giờ
+        // Lấy danh sách các khung giờ ĐÃ ĐƯỢC ĐẶT cho hóa đơn này
+        List<String> alreadyBookedSlots = facilityService.getBookedTimeSlotsForInvoice(this.currentInvoiceId, this.facility.getServiceId());
+
+        // Lặp qua tất cả các JLabel khung giờ
         for (Component comp : jPanel1.getComponents()) {
             if (comp instanceof JLabel) {
                 JLabel timeSlotLabel = (JLabel) comp;
                 String timeSlotText = timeSlotLabel.getText();
 
-                // Dùng service để kiểm tra xem khung giờ này còn trống không
-                if (facilityService.isTimeSlotAvailable(this.facility, timeSlotText)) {
-                    // Nếu còn trống -> Tô màu xanh và thêm sự kiện click
-                    timeSlotLabel.setBackground(GREEN_AVAILABLE);
-                    timeSlotLabel.setEnabled(true); // Cho phép tương tác
+                // Ưu tiên 1: Kiểm tra xem slot này đã được chọn trong hóa đơn hiện tại chưa
+                if (alreadyBookedSlots.contains(timeSlotText)) {
+                    timeSlotLabel.setBackground(YELLOW_ALREADY_BOOKED); // Tô màu VÀNG
+                    timeSlotLabel.setEnabled(false); // Vô hiệu hóa, KHÔNG cho click
+                }
+                // Ưu tiên 2: Nếu không, kiểm tra xem slot này còn trống không (so với tổng sức chứa)
+                else if (facilityService.isTimeSlotAvailable(this.facility, timeSlotText)) {
+                    timeSlotLabel.setBackground(GREEN_AVAILABLE); // Tô màu còn trống
+                    timeSlotLabel.setEnabled(true); // Cho phép click
                     addClickableListener(timeSlotLabel);
-                } else {
-                    // Nếu đã hết chỗ -> Tô màu xám và vô hiệu hóa
-                    timeSlotLabel.setBackground(GRAY_UNAVAILABLE);
-                    timeSlotLabel.setEnabled(false); // Không cho phép tương tác
+                } 
+                // Ưu tiên 3: Nếu không thỏa 2 điều trên, tức là slot đã đầy hoàn toàn
+                else {
+                    timeSlotLabel.setBackground(GRAY_UNAVAILABLE); // Tô màu đã hết
+                    timeSlotLabel.setEnabled(false); // Vô hiệu hóa
                 }
             }
         }
@@ -462,7 +474,7 @@ public class BookFacilitiesForm extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                BookFacilitiesForm dialog = new BookFacilitiesForm(new javax.swing.JFrame(), true, new Facility(), new FacilityService());
+                BookFacilitiesForm dialog = new BookFacilitiesForm(new javax.swing.JFrame(), true, new Facility(), new FacilityService(),  0);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

@@ -1,34 +1,29 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
-/**
- *
- * @author DELL
- */
 public class Facility {
     private String serviceId;
     private String serviceName;
     private String manufacturer;
     private String unit;
-    private String stockQuantity; // Dùng String để chứa được cả số và "unlimited"
+    private String stockQuantity;
     private double price;
+    private String description; 
 
-    // Constructors (nên có một constructor trống và một đủ tham số)
+    // Constructors
     public Facility() {}
 
-    public Facility(String serviceId, String serviceName, String manufacturer, String unit, String stockQuantity, double price) {
+    // CẬP NHẬT CONSTRUCTOR ĐẦY ĐỦ THAM SỐ
+    public Facility(String serviceId, String serviceName, String manufacturer, String unit, String stockQuantity, double price, String description) {
         this.serviceId = serviceId;
         this.serviceName = serviceName;
         this.manufacturer = manufacturer;
         this.unit = unit;
         this.stockQuantity = stockQuantity;
         this.price = price;
+        this.description = description; 
     }
 
-    // Getters and Setters cho tất cả các thuộc tính
+    // --- Getters and Setters ---
     public String getServiceId() { return serviceId; }
     public void setServiceId(String serviceId) { this.serviceId = serviceId; }
 
@@ -46,4 +41,7 @@ public class Facility {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

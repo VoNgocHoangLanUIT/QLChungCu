@@ -1,4 +1,4 @@
-package Process.Parking;
+package Process;
 
 import javax.swing.*;
 import java.awt.*;

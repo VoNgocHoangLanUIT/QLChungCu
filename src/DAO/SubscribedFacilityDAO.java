@@ -120,4 +120,26 @@ public class SubscribedFacilityDAO {
         }
         return count;
     }
+    
+    public List<String> getBookedTimeSlotsForInvoice(int invoiceId, String serviceId, Date date) {
+        List<String> bookedSlots = new ArrayList<>();
+        // Chỉ lấy các bản ghi của hóa đơn, dịch vụ và ngày hôm nay
+        String sql = "SELECT khung_gio_dang_ky FROM CHITIET_DICHVU_HD WHERE ma_hoa_don = ? AND ma_dv_ngoai = ? AND TRUNC(ngay_dang_ky) = TRUNC(?)";
+        
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, invoiceId);
+            ps.setString(2, serviceId);
+            ps.setDate(3, new java.sql.Date(date.getTime()));
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookedSlots.add(rs.getString("khung_gio_dang_ky"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bookedSlots;
+    }
 }

@@ -1,17 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Service;
 
 import DAO.InvoiceDAO;
+import Model.Invoice;
 import Model.SubscribedFacility;
 import java.util.List;
-
-/**
- *
- * @author DELL
- */
 
 public class InvoiceService {
     private InvoiceDAO invoiceDAO;
@@ -20,16 +12,33 @@ public class InvoiceService {
         this.invoiceDAO = new InvoiceDAO();
     }
 
-    public int createInvoice(double initialFee) {
-        // Có thể thêm logic ở đây, ví dụ kiểm tra initialFee > 0
-        return invoiceDAO.addInvoice(initialFee);
+    public List<Invoice> getAllInvoices() {
+        return invoiceDAO.getAllInvoices();
+    }
+
+    public int createInvoice(String residentId, double initialFee) {
+        if (residentId == null || residentId.trim().isEmpty()) {
+            return -1;
+        }
+        return invoiceDAO.addInvoice(residentId, initialFee, "Pending"); // Mặc định là Pending
+    }
+    
+    public boolean updateInvoice(Invoice invoice) {
+        return invoiceDAO.updateInvoice(invoice);
+    }
+    
+    public boolean deleteInvoice(int invoiceId) {
+        return invoiceDAO.deleteInvoice(invoiceId);
     }
 
     public void updateInvoiceTotal(int invoiceId, double newTotal) {
         invoiceDAO.updateInvoiceTotal(invoiceId, newTotal);
     }
-
-    // Logic nghiệp vụ: Tính tổng tiền từ danh sách các dịch vụ đã đăng ký
+    
+    public void finalizePayment(int invoiceId, double totalFee, double cashReceived, double changeReturned, String status) {
+        invoiceDAO.updateInvoicePayment(invoiceId, totalFee, cashReceived, changeReturned, status);
+    }
+    
     public double calculateTotalFee(List<SubscribedFacility> subscribedFacilities) {
         double total = 0.0;
         for (SubscribedFacility sf : subscribedFacilities) {

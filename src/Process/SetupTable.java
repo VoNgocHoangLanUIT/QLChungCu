@@ -1,4 +1,4 @@
-package Process.Parking;
+package Process;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -23,16 +23,12 @@ public class SetupTable {
         String placeholder = "Search...";
         textField.setText(placeholder);
         textField.setForeground(Color.GRAY);
-
-        // Viền màu cho textField (không thay đổi khi focus)
         textField.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
 
-        // Tạo TableRowSorter cho JTable
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         TableRowSorter<TableModel> rowSorter = new TableRowSorter<>(model);
         table.setRowSorter(rowSorter);
 
-        // Thêm placeholder và lắng nghe sự kiện focus
         textField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -47,12 +43,11 @@ public class SetupTable {
                 if (textField.getText().isEmpty()) {
                     textField.setText(placeholder);
                     textField.setForeground(Color.GRAY);
-                    filterTable(rowSorter, ""); // Nếu không có gì, lọc lại bảng
+                    filterTable(rowSorter, "");
                 }
             }
         });
 
-        // Thêm DocumentListener để lắng nghe sự thay đổi trong textField
         textField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -71,20 +66,20 @@ public class SetupTable {
         });
     }
 
-    // Định nghĩa phương thức filterTable để lọc dữ liệu
     private void filterTable(TableRowSorter<TableModel> rowSorter, String query) {
-        // Nếu không có từ khóa tìm kiếm thì không lọc
-        if (query.isEmpty()) {
-            rowSorter.setRowFilter(null); // Hiển thị tất cả các dòng
+        if (query.isEmpty() || query.equals("Search...")) {
+            rowSorter.setRowFilter(null);
         } else {
-            // Thực hiện lọc với từ khóa nhập vào
-            rowSorter.setRowFilter(RowFilter.regexFilter(query)); // (?i) giúp tìm kiếm không phân biệt chữ hoa/thường
+            // Sử dụng (?i) để tìm kiếm không phân biệt chữ hoa, chữ thường
+            rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + query));
         }
     }
 
-    // Thiết lập bảng (JTable)
     private void setupTable(JTable table) {
-        table.setRowHeight(36);
+        // --- THAY ĐỔI 1: TĂNG CHIỀU CAO CỦA DÒNG ---
+        // Tăng chiều cao của mỗi dòng để dễ nhìn hơn
+        table.setRowHeight(45); // Giá trị cũ là 36
+
         table.setBackground(Color.WHITE);
         table.setForeground(Color.BLACK);
         table.setIntercellSpacing(new Dimension(0, 0));
@@ -100,27 +95,40 @@ public class SetupTable {
                         table, value, isSelected, hasFocus, row, column);
 
                 label.setHorizontalAlignment(CENTER);
-                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                // --- THAY ĐỔI 2: TĂNG CỠ CHỮ HEADER ---
+                label.setFont(new Font("Segoe UI", Font.BOLD, 16)); // Cỡ chữ cũ là 14
                 label.setBackground(new Color(230, 230, 230));
                 label.setForeground(Color.BLACK);
                 label.setOpaque(true);
-                label.setPreferredSize(new Dimension(label.getPreferredSize().width, 36));
+                label.setPreferredSize(new Dimension(label.getPreferredSize().width, 40)); // Tăng chiều cao header
                 label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE));
 
                 return label;
             }
         });
 
-        // Tùy chỉnh cell
+        // Tùy chỉnh cell (ô chứa dữ liệu)
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                             boolean isSelected, boolean hasFocus, int row, int column) {
                 JLabel label = (JLabel) super.getTableCellRendererComponent(
                         table, value, isSelected, hasFocus, row, column);
+                
+                // --- THAY ĐỔI 3: TĂNG CỠ CHỮ NỘI DUNG CELL ---
+                label.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Thêm dòng này để set font
 
                 label.setHorizontalAlignment(SwingConstants.CENTER);
-                label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+                label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+
+                // Thêm hiệu ứng khi chọn dòng
+                if (isSelected) {
+                    label.setBackground(new Color(70, 113, 141));
+                    label.setForeground(Color.WHITE);
+                } else {
+                    label.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 245, 245)); // Hiệu ứng dòng chẵn lẻ
+                    label.setForeground(Color.BLACK);
+                }
 
                 return label;
             }

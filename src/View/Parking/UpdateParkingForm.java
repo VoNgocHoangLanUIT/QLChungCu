@@ -17,16 +17,16 @@ public class UpdateParkingForm extends javax.swing.JDialog {
      * Creates new form UpdateParking
      */
     private ParkingService parkingService;
-    public UpdateParkingForm(java.awt.Frame parent, boolean modal, ParkingSlot slotToUpdate) {
+    public UpdateParkingForm(java.awt.Frame parent, boolean modal, ParkingSlot slotToUpdate, ParkingService parkingService) {
         super(parent, modal);
         this.parkingService = new ParkingService();
         initComponents();
         setLocationRelativeTo(parent); // Hiển thị dialog ở giữa frame cha
-        slotNameField.setText(slotToUpdate.getSlotName());
-        slotTypeField.setText(slotToUpdate.getSlotType());
-        vehicleField.setText(slotToUpdate.getVehicle());
+        complaintIDField.setText(slotToUpdate.getSlotName());
+        complaintTitleField.setText(slotToUpdate.getSlotType());
+        complaintByField.setText(slotToUpdate.getVehicle());
         statusComboBox.setSelectedItem(slotToUpdate.getStatus());
-        licensePlateField.setText(slotToUpdate.getLicensePlate());
+        descriptionField.setText(slotToUpdate.getLicensePlate());
     }
 
     /**
@@ -45,10 +45,10 @@ public class UpdateParkingForm extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        slotNameField = new javax.swing.JTextField();
-        slotTypeField = new javax.swing.JTextField();
-        vehicleField = new javax.swing.JTextField();
-        licensePlateField = new javax.swing.JTextField();
+        complaintIDField = new javax.swing.JTextField();
+        complaintTitleField = new javax.swing.JTextField();
+        complaintByField = new javax.swing.JTextField();
+        descriptionField = new javax.swing.JTextField();
         updateParkingSlotButton = new javax.swing.JButton();
         statusComboBox = new javax.swing.JComboBox<>();
         backButton = new javax.swing.JButton();
@@ -79,15 +79,15 @@ public class UpdateParkingForm extends javax.swing.JDialog {
         jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel6.setText("License Plate");
 
-        slotNameField.setBackground(new java.awt.Color(240, 240, 240));
-        slotNameField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        slotNameField.setFocusable(false);
+        complaintIDField.setBackground(new java.awt.Color(240, 240, 240));
+        complaintIDField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        complaintIDField.setFocusable(false);
 
-        slotTypeField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        complaintTitleField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
-        vehicleField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        complaintByField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
-        licensePlateField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        descriptionField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         updateParkingSlotButton.setBackground(new java.awt.Color(0, 153, 0));
         updateParkingSlotButton.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
@@ -122,7 +122,7 @@ public class UpdateParkingForm extends javax.swing.JDialog {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(licensePlateField))
+                        .addComponent(descriptionField))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
@@ -130,15 +130,15 @@ public class UpdateParkingForm extends javax.swing.JDialog {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(vehicleField))
+                        .addComponent(complaintByField))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(slotTypeField))
+                        .addComponent(complaintTitleField))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(slotNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 422, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(complaintIDField, javax.swing.GroupLayout.PREFERRED_SIZE, 422, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(9, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -153,16 +153,16 @@ public class UpdateParkingForm extends javax.swing.JDialog {
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(28, 28, 28)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(slotNameField, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+                    .addComponent(complaintIDField, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(slotTypeField, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+                    .addComponent(complaintTitleField, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(vehicleField))
+                    .addComponent(complaintByField))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
@@ -170,7 +170,7 @@ public class UpdateParkingForm extends javax.swing.JDialog {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(licensePlateField))
+                    .addComponent(descriptionField))
                 .addGap(29, 29, 29)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(updateParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -194,11 +194,11 @@ public class UpdateParkingForm extends javax.swing.JDialog {
 
     private void updateParkingSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateParkingSlotButtonActionPerformed
         // TODO add your handling code here:
-        String slotNameText = slotNameField.getText();
-        String slotTypeText = slotTypeField.getText();
-        String vehicleText = vehicleField.getText();
+        String slotNameText = complaintIDField.getText();
+        String slotTypeText = complaintTitleField.getText();
+        String vehicleText = complaintByField.getText();
         String statusText = (String) statusComboBox.getSelectedItem();
-        String licensePlateText = licensePlateField.getText();
+        String licensePlateText = descriptionField.getText();
 
         // Tạo đối tượng ParkingSlot
         ParkingSlot slotToUpdate = new ParkingSlot(slotNameText, slotTypeText, vehicleText, statusText, licensePlateText);
@@ -251,7 +251,7 @@ public class UpdateParkingForm extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 ParkingSlot sampleSlot = new ParkingSlot("A101", "Staff", "Car", "Available", "77A-012.34");
-                UpdateParkingForm dialog = new UpdateParkingForm(new javax.swing.JFrame(), true, sampleSlot);
+                UpdateParkingForm dialog = new UpdateParkingForm(new javax.swing.JFrame(), true, sampleSlot, new ParkingService());
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -265,6 +265,10 @@ public class UpdateParkingForm extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
+    private javax.swing.JTextField complaintByField;
+    private javax.swing.JTextField complaintIDField;
+    private javax.swing.JTextField complaintTitleField;
+    private javax.swing.JTextField descriptionField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -272,11 +276,7 @@ public class UpdateParkingForm extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JTextField licensePlateField;
-    private javax.swing.JTextField slotNameField;
-    private javax.swing.JTextField slotTypeField;
     private javax.swing.JComboBox<String> statusComboBox;
     private javax.swing.JButton updateParkingSlotButton;
-    private javax.swing.JTextField vehicleField;
     // End of variables declaration//GEN-END:variables
 }

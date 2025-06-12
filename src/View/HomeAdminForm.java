@@ -5,16 +5,20 @@
 package View;
 
 import Process.*;
-import Process.Parking.*;
 import View.Booking.BookFacilitiesForm;
 import View.Parking.*;
+import View.Service.AddCompulsoryServiceForm;
+import View.Service.UpdateCompulsoryServiceForm;
+
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Image;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -26,11 +30,40 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 import Model.*;
-
+import Model.DTO.AuthorizationInfo;
 import Service.*;
+import View.Complaint.AddComplaintForm;
+import View.Complaint.DetailComplaintForm;
+import View.Complaint.UpdateComplaintForm;
+import View.Facility.AddFacilityForm;
+import View.Facility.DetailFacilityForm;
+import View.Facility.UpdateFacilityForm;
+import View.Invoice.DetailInvoiceForm;
+import View.Invoice.UpdateInvoiceForm;
+import View.Complaint.AssignComplaintForm;
+import View.Authorization.UpdateAuthorization;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+
+// THÊM CÁC IMPORT CẦN THIẾT CHO VIỆC XUẤT PDF
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 /**
  *
  * @author DELL
@@ -45,17 +78,34 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private FacilityService facilityService;
     private InvoiceService invoiceService;
     private SubscribedFacilityService subscribedFacilityService;
+    private ComplaintService complaintService;
+    private StaffService staffService; 
+    private AssignmentService assignmentService; 
+    private ResidentService residentService;
+    private AuthorizationService authorizationService;
+    private CompulsoryServiceService compulsoryServiceService;
+    
+    private String currentResidentId;
 
     // --- UI Helpers ---
     private SetLayoutPanel s;
     private ButtonEffectGroup group;
     
-    public HomeAdminForm() {
+    public HomeAdminForm(String residentId) {
+        
+        this.currentResidentId = residentId;
+        
         initComponents();
         this.parkingService = new ParkingService();
         this.facilityService = new FacilityService();
         this.invoiceService = new InvoiceService();
         this.subscribedFacilityService = new SubscribedFacilityService();
+        this.complaintService = new ComplaintService();
+        this.staffService = new StaffService(); 
+        this.assignmentService = new AssignmentService(); 
+        this.residentService = new ResidentService();
+        this.authorizationService = new AuthorizationService();
+        this.compulsoryServiceService = new CompulsoryServiceService();
         
         s = new SetLayoutPanel(scrollPane, contentPanel, mainPanel);
         
@@ -74,8 +124,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         // Gán các button vào ButtonEffectGroup
         JButton[] buttons = {homeButton, residentManagementButton, parkingManagementButton, 
-                            complaintsButton, serviceFacilityButton, accountsButton,
-                            profileButton, otherButton, logOutButton};
+                            complaintsButton, serviceFacilityButton, bookingButton,
+                            profileButton, authorizationButton, logOutButton};
 
         // Tạo ButtonEffectGroup và truyền vào các button và icon
         group = new ButtonEffectGroup(buttons, iconPaths, serviceSub, serviceFacilityButton, menuPanel, logOutButton);
@@ -92,40 +142,47 @@ public class HomeAdminForm extends javax.swing.JFrame {
         
         new SetupTable(listFacilitiesSubscribiedTable);
         
+        descriptionFacilities.setLineWrap(true);
+        descriptionFacilities.setWrapStyleWord(true);
+        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_NEVER); 
+        
         //xu ly chi tiet dich vu ngoai khi select
         listFacilitiesTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int selectedRow = listFacilitiesTable.getSelectedRow();
                 if (selectedRow != -1) {
-                    // Gán ảnh dịch vụ
-                    Object value = listFacilitiesTable.getValueAt(selectedRow, 0);
-                    if (value != null) {
-                        String fileName = value.toString(); // ví dụ: "s1"
-                        String path = "/icon/" + fileName +".jpg"; 
+                    String serviceId = listFacilitiesTable.getValueAt(selectedRow, 0).toString();
 
-                        ImageIcon icon = new ImageIcon(getClass().getResource(path));
-                        // Resize ảnh để vừa với JLabel
-                        Image img = icon.getImage();
-                        int labelWidth = jLabel2.getWidth();
-                        int labelHeight = jLabel2.getHeight();
+                    // Tìm đối tượng Facility đầy đủ từ service
+                    Facility selectedFacility = facilityService.getAllFacilities().stream()
+                        .filter(f -> f.getServiceId().equals(serviceId))
+                        .findFirst()
+                        .orElse(null);
 
-                        if (labelWidth > 0 && labelHeight > 0) {
-                            Image scaled = img.getScaledInstance(labelWidth, labelHeight, Image.SCALE_SMOOTH);
-                            jLabel2.setIcon(new ImageIcon(scaled));
+                    if (selectedFacility != null) {
+                        // --- Xử lý hình ảnh (giữ nguyên) ---
+                        String path = "/icon/" + selectedFacility.getServiceId() + ".jpg";
+                        java.net.URL imgUrl = getClass().getResource(path);
+                        if (imgUrl != null) {
+                            ImageIcon icon = new ImageIcon(imgUrl);
+                            int panelWidth = jPanel4.getWidth();
+                            int panelHeight = jPanel4.getHeight();
+                            if (panelWidth > 0 && panelHeight > 0) {
+                                Image scaled = icon.getImage().getScaledInstance(panelWidth, panelHeight, Image.SCALE_SMOOTH);
+                                jLabel2.setIcon(new ImageIcon(scaled));
+                            }
                         } else {
-                            // Nếu label chưa hiển thị (width=0), thì gán tạm icon, resize sau
-                            jLabel2.setIcon(icon);
+                            jLabel2.setIcon(null);
                         }
+
+                        // --- Gán dữ liệu vào các text field ---
+                        serviceID.setText(selectedFacility.getServiceId());
+                        serviceName.setText(selectedFacility.getServiceName());
+                        price.setText(String.valueOf(selectedFacility.getPrice()));
+
+                        // THÊM DÒNG NÀY ĐỂ CẬP NHẬT MÔ TẢ
+                        descriptionFacilities.setText(selectedFacility.getDescription());
                     }
-
-                    // Gán dữ liệu vào các text field
-                    Object serviceIDValue = listFacilitiesTable.getValueAt(selectedRow, 0);
-                    Object serviceNameValue = listFacilitiesTable.getValueAt(selectedRow, 1);
-                    Object priceValue = listFacilitiesTable.getValueAt(selectedRow, 5);
-
-                    serviceID.setText(serviceIDValue != null ? serviceIDValue.toString() : "");
-                    serviceName.setText(serviceNameValue != null ? serviceNameValue.toString() : "");
-                    price.setText(priceValue != null ? priceValue.toString() : "");
                 }
             }
         });
@@ -145,7 +202,19 @@ public class HomeAdminForm extends javax.swing.JFrame {
         cashReceived.getDocument().addDocumentListener(listener);
 //---------------------------------------------------------------------SERVICE---------------------------------------------
         new SetupTable(searchServiceField, listServiceTable);
-        
+        updateServiceTable();
+ //---------------------------------------------------------------------COMPLAINT---------------------------------------------     
+        new SetupTable(searchComplaintField, listComplaintTable);
+        updateComplaintsTable();
+ //---------------------------------------------------------------------AUTHORIZATION---------------------------------------------  
+        new SetupTable(searchAuthorizationField, listAuthorizationTable);
+        updateAuthorizationTable();
+ //---------------------------------------------------------------------FACILITY--------------------------------------------- 
+        new SetupTable(searchFacilityField, listFacilityTable);
+        updateFacilityTable();
+ //---------------------------------------------------------------------INVOICE--------------------------------------------- 
+        new SetupTable(searchInvoiceField, listInvoiceTable);
+        updateInvoiceTable(); // Tải dữ liệu cho bảng hóa đơn
     }
 //--------------------------------------------ket thuc constructor-------------------------------------------------------  
     public void showPanel(JPanel panel,String name) {
@@ -153,7 +222,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         cl.show(panel, name);
     }
 
-    //----------------------------------------Parking------------------------------
+    //--------------------------------------------------------------------------------Parking------------------------------------------
     // Đảm bảo rằng bạn có một phương thức để cập nhật bảng:
     public void updateTableParking() {
         List<ParkingSlot> slots = parkingService.getAllParkingSlots(); // Trả về List<ParkingSlot>
@@ -173,22 +242,26 @@ public class HomeAdminForm extends javax.swing.JFrame {
         }
     }
     
-//----------------------------------------booking------------------------------
+//--------------------------------------------------------------------------------booking--------------------------------------------------
     //xu ly tien thua cua khach
     private void updateChangeReturned() {
         try {
-            double tongTien = Double.parseDouble(totalBill.getText().trim());
-            double tienNhan = Double.parseDouble(cashReceived.getText().trim().replace(" ", ""));
+            // Xóa ký tự phân cách nhóm trước khi chuyển đổi
+            String totalText = totalBill.getText().trim().replace(" ", "");
+            String cashText = cashReceived.getText().trim().replace(" ", "");
+
+            double tongTien = Double.parseDouble(totalText);
+            double tienNhan = Double.parseDouble(cashText);
             double tienThua = tienNhan - tongTien;
 
-            // Tạo formatter với dấu cách giữa mỗi nhóm 3 chữ số
             DecimalFormatSymbols symbols = new DecimalFormatSymbols();
             symbols.setGroupingSeparator(' ');
-            DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
+            // THAY ĐỔI ĐỊNH DẠNG: Bỏ phần thập phân .00
+            DecimalFormat formatter = new DecimalFormat("#,##0", symbols);
 
             changeReturned.setText(formatter.format(tienThua));
         } catch (NumberFormatException e) {
-            changeReturned.setText(""); // Nếu nhập sai định dạng số thì xóa kết quả
+            changeReturned.setText(""); 
         }
     }
     
@@ -229,7 +302,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
     }
 
     private void handleInvoiceUpdate() {
-        // Gọi service để tính tổng tiền từ list object, thay vì đọc từ JTable
         if (invoiceID.getText().isEmpty()) {
             totalBill.setText("");
             cashReceived.setText("");
@@ -238,23 +310,20 @@ public class HomeAdminForm extends javax.swing.JFrame {
         }
 
         int currentInvoiceId = Integer.parseInt(invoiceID.getText());
-
-        // Lấy danh sách chi tiết từ CSDL
         List<SubscribedFacility> currentCart = subscribedFacilityService.getByInvoiceId(currentInvoiceId);
-
-        // Tính tổng tiền từ danh sách này
         double totalFee = invoiceService.calculateTotalFee(currentCart);
-
-        // Cập nhật tổng tiền vào bảng HoaDon trong CSDL
         invoiceService.updateInvoiceTotal(currentInvoiceId, totalFee);
-
-        // Hiển thị tổng tiền lên giao diện
-        totalBill.setText(String.valueOf(totalFee));
+        
+        // THAY ĐỔI ĐỊNH DẠNG: Hiển thị dưới dạng số nguyên
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+        symbols.setGroupingSeparator(' ');
+        DecimalFormat formatter = new DecimalFormat("#,##0", symbols);
+        totalBill.setText(formatter.format(totalFee));
     }
 
     private void updateSubscribedFacilitiesTable() {
         DefaultTableModel subscribedModel = (DefaultTableModel) listFacilitiesSubscribiedTable.getModel();
-        subscribedModel.setRowCount(0); // Xóa hết dữ liệu cũ
+        subscribedModel.setRowCount(0);
 
         if (invoiceID.getText().isEmpty()) {
             return;
@@ -263,47 +332,37 @@ public class HomeAdminForm extends javax.swing.JFrame {
         int currentInvoiceId = Integer.parseInt(invoiceID.getText());
         List<SubscribedFacility> cartFromDB = subscribedFacilityService.getByInvoiceId(currentInvoiceId);
 
-        // Sử dụng Map để gộp các dịch vụ có cùng tên
-        // Key: Service Name (String), Value: Dữ liệu dòng (Object[])
+        // Sử dụng Map để gộp các dịch vụ có cùng mã
+        // Key: Service ID (String), Value: Dữ liệu dòng (Object[])
         java.util.Map<String, Object[]> aggregatedRows = new java.util.LinkedHashMap<>();
 
         for (SubscribedFacility sf : cartFromDB) {
-            String serviceName = sf.getServiceName();
+            String serviceId = sf.getServiceId(); // Lấy Service ID làm khóa
 
-            // Kiểm tra xem dịch vụ đã có trong map hay chưa
-            if (aggregatedRows.containsKey(serviceName)) {
+            if (aggregatedRows.containsKey(serviceId)) {
                 // Nếu đã có, cập nhật số lượng và thành tiền
-                Object[] existingRow = aggregatedRows.get(serviceName);
-
+                Object[] existingRow = aggregatedRows.get(serviceId);
                 try {
-                    // Giả định: cột số lượng (quantity) ở vị trí 1, đơn giá (unitPrice) ở vị trí 3
                     int oldQuantity = Integer.parseInt(existingRow[1].toString());
-                    int quantityToAdd = sf.getQuantity(); // Giả định getQuantity() trả về int
+                    int quantityToAdd = sf.getQuantity();
                     int newQuantity = oldQuantity + quantityToAdd;
-
                     double unitPrice = Double.parseDouble(existingRow[3].toString());
                     double newLineTotal = newQuantity * unitPrice;
-
-                    // Cập nhật lại dòng dữ liệu
-                    existingRow[1] = newQuantity;       // Cập nhật số lượng mới
-                    existingRow[4] = newLineTotal;      // Cập nhật thành tiền mới
-
+                    existingRow[1] = newQuantity;
+                    existingRow[4] = newLineTotal;
                 } catch (NumberFormatException e) {
-                    // Xử lý nếu có lỗi khi chuyển đổi kiểu dữ liệu.
-                    // Cần đảm bảo kiểu dữ liệu trả về của getQuantity() và getUnitPrice() là số.
                     System.err.println("Lỗi định dạng số: " + e.getMessage());
                 }
-
             } else {
                 // Nếu chưa có, thêm dòng mới vào map
                 Object[] newRow = new Object[]{
-                    sf.getServiceName(),
+                    sf.getServiceId(), // Hiển thị Service ID thay vì Service Name
                     sf.getQuantity(),
                     sf.getUnit(),
                     sf.getUnitPrice(),
                     sf.getLineTotal()
                 };
-                aggregatedRows.put(serviceName, newRow);
+                aggregatedRows.put(serviceId, newRow);
             }
         }
 
@@ -312,8 +371,112 @@ public class HomeAdminForm extends javax.swing.JFrame {
             subscribedModel.addRow(rowData);
         }
     }
-
     
+    private void resetInvoiceFields() {
+        invoiceID.setText("");
+        totalBill.setText("");
+        cashReceived.setText("");
+        changeReturned.setText("");
+        nameResident.setText("");
+        phoneNumber.setText("");
+        
+        updateSubscribedFacilitiesTable(); 
+    }
+//--------------------------------------------------------------------------------SERVICE------------------------------------------------------
+    public void updateServiceTable() {
+        List<CompulsoryService> services = compulsoryServiceService.getAllServices();
+        DefaultTableModel model = (DefaultTableModel) listServiceTable.getModel();
+        model.setRowCount(0); // Xóa dữ liệu cũ
+
+        for (CompulsoryService service : services) {
+            model.addRow(new Object[]{
+                service.getServiceId(),
+                service.getServiceName(),
+                service.getProviderId(),
+                service.getUnit(),
+                service.getPrice()
+            });
+        }
+    }
+//--------------------------------------------------------------------------------COMPLAINT------------------------------------------------------
+    public void updateComplaintsTable() {
+        // Lấy model của JTable mà bạn đã tạo
+        DefaultTableModel model = (DefaultTableModel) listComplaintTable.getModel();
+        model.setRowCount(0); // Xóa dữ liệu cũ
+
+        // Đặt lại tên các cột cho khớp với yêu cầu
+        // Bạn có thể làm việc này một lần trong Design View của NetBeans
+        model.setColumnIdentifiers(new Object[]{
+            "Complaint ID", "Complaint Title", "Complaint By", "Date", "Status"
+        });
+
+        List<Complaint> complaints = complaintService.getAllComplaints();
+
+        // Định dạng ngày tháng
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MM-yyyy");
+
+        for (Complaint complaint : complaints) {
+            String complaintDateStr = (complaint.getComplaintDate() != null) ? sdf.format(complaint.getComplaintDate()) : "N/A";
+            model.addRow(new Object[]{
+                complaint.getComplaintId(),
+                complaint.getTitle(),
+                complaint.getApartmentId(), // "Complaint By" là mã căn hộ
+                complaintDateStr,
+                complaint.getStatus()
+            });
+        }
+    }
+//--------------------------------------------------------------------------------AUTHORIZATION------------------------------------------------------
+    public void updateAuthorizationTable() {
+        DefaultTableModel model = (DefaultTableModel) listAuthorizationTable.getModel();
+        model.setRowCount(0); // Xóa dữ liệu cũ
+
+        List<Account> accountList = authorizationService.getAllAccountsForAuthorization();
+
+        for (Account acc : accountList) {
+            model.addRow(new Object[]{
+                acc.getUsername(),
+                acc.getEmail(),
+                acc.getRole() == null ? "N/A" : acc.getRole(),
+                acc.getResidentId() == null ? "N/A" : acc.getResidentId()
+            });
+        }
+    }
+//--------------------------------------------------------------------------------FACILITY------------------------------------------------------
+    public void updateFacilityTable() {
+        List<Facility> facilities = facilityService.getAllFacilities();
+        DefaultTableModel model = (DefaultTableModel) listFacilityTable.getModel();
+        model.setRowCount(0); // Clear old data
+
+        for (Facility facility : facilities) {
+            model.addRow(new Object[]{
+                facility.getServiceId(),
+                facility.getServiceName(),
+                facility.getManufacturer(),
+                facility.getUnit(),
+                facility.getStockQuantity(),
+                facility.getPrice()
+            });
+        }
+    }
+//--------------------------------------------------------------------------------INVOICE------------------------------------------------------
+    public void updateInvoiceTable() {
+        List<Invoice> invoices = invoiceService.getAllInvoices();
+        DefaultTableModel model = (DefaultTableModel) listInvoiceTable.getModel();
+        model.setRowCount(0); // Xóa dữ liệu cũ
+        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
+        for (Invoice invoice : invoices) {
+            model.addRow(new Object[]{
+                invoice.getInvoiceId(),
+                invoice.getResidentId(),
+                dateFormat.format(invoice.getCreationDate()),
+                invoice.getTotalFee(),
+                invoice.getStatus()
+            });
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -331,20 +494,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
         residentPanel = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
-        apartmentPanel = new View.ColorPanel.gradientMenu();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        maCanHo = new javax.swing.JTextField();
-        dienTich = new javax.swing.JTextField();
-        trangThai = new javax.swing.JTextField();
-        soDien = new javax.swing.JTextField();
-        soNuoc = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        themButton = new javax.swing.JButton();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
         mainParking = new javax.swing.JPanel();
         parkingToolbar = new javax.swing.JPanel();
         searchParkingSlotField = new javax.swing.JTextField();
@@ -380,7 +529,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel20 = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        descriptionFacilities = new javax.swing.JTextArea();
         jLabel22 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel23 = new javax.swing.JLabel();
@@ -390,8 +539,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel26 = new javax.swing.JLabel();
         jLabel27 = new javax.swing.JLabel();
         invoiceID = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jTextField7 = new javax.swing.JTextField();
+        phoneNumber = new javax.swing.JTextField();
+        nameResident = new javax.swing.JTextField();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel28 = new javax.swing.JLabel();
         totalBill = new javax.swing.JTextField();
@@ -420,11 +569,69 @@ public class HomeAdminForm extends javax.swing.JFrame {
         listServiceScroll = new javax.swing.JScrollPane();
         listServiceTable = new javax.swing.JTable();
         listServiceLabel = new javax.swing.JLabel();
+        complaintPanel = new javax.swing.JPanel();
+        complaintToolbar = new javax.swing.JPanel();
+        searchComplaintField = new javax.swing.JTextField();
+        addComplaintButton = new javax.swing.JButton();
+        updateComplaintButton = new javax.swing.JButton();
+        deleteComplaintButton = new javax.swing.JButton();
+        jLabel35 = new javax.swing.JLabel();
+        jLabel36 = new javax.swing.JLabel();
+        jLabel37 = new javax.swing.JLabel();
+        toggleMenuLabel2 = new javax.swing.JLabel();
+        detailComplaintButton = new javax.swing.JButton();
+        assignComplaintButton = new javax.swing.JButton();
+        jLabel38 = new javax.swing.JLabel();
+        jLabel39 = new javax.swing.JLabel();
+        listComplaintPanel = new javax.swing.JPanel();
+        listComplaintScroll = new javax.swing.JScrollPane();
+        listComplaintTable = new javax.swing.JTable();
+        listComplaintLabel = new javax.swing.JLabel();
+        authorizationPanel = new javax.swing.JPanel();
+        authorizationToolbar = new javax.swing.JPanel();
+        searchAuthorizationField = new javax.swing.JTextField();
+        updateAuthorizationButton = new javax.swing.JButton();
+        jLabel41 = new javax.swing.JLabel();
+        toggleMenuLabel3 = new javax.swing.JLabel();
+        listAuthorizationPanel = new javax.swing.JPanel();
+        listComplaintScroll1 = new javax.swing.JScrollPane();
+        listAuthorizationTable = new javax.swing.JTable();
+        listComplaintLabel1 = new javax.swing.JLabel();
+        facilityPanel = new javax.swing.JPanel();
+        facilityToolbar = new javax.swing.JPanel();
+        searchFacilityField = new javax.swing.JTextField();
+        addFacilityButton = new javax.swing.JButton();
+        updateFacilityButton = new javax.swing.JButton();
+        deleteFacilityButton = new javax.swing.JButton();
+        jLabel40 = new javax.swing.JLabel();
+        jLabel42 = new javax.swing.JLabel();
+        jLabel43 = new javax.swing.JLabel();
+        toggleMenuLabel4 = new javax.swing.JLabel();
+        detailFacilityButton = new javax.swing.JButton();
+        jLabel44 = new javax.swing.JLabel();
+        listFacilityPanel = new javax.swing.JPanel();
+        listComplaintScroll2 = new javax.swing.JScrollPane();
+        listFacilityTable = new javax.swing.JTable();
+        listComplaintLabel2 = new javax.swing.JLabel();
+        invoicePanel = new javax.swing.JPanel();
+        invoiceToolbar = new javax.swing.JPanel();
+        searchInvoiceField = new javax.swing.JTextField();
+        updateInvoiceButton = new javax.swing.JButton();
+        deleteInvoiceButton = new javax.swing.JButton();
+        jLabel46 = new javax.swing.JLabel();
+        jLabel47 = new javax.swing.JLabel();
+        toggleMenuLabel5 = new javax.swing.JLabel();
+        detailInvoiceButton = new javax.swing.JButton();
+        jLabel48 = new javax.swing.JLabel();
+        listInvoicePanel = new javax.swing.JPanel();
+        listComplaintScroll3 = new javax.swing.JScrollPane();
+        listInvoiceTable = new javax.swing.JTable();
+        listComplaintLabel3 = new javax.swing.JLabel();
         scrollPane = new javax.swing.JScrollPane();
         menuPanel = new javax.swing.JPanel();
-        accountsButton = new javax.swing.JButton();
+        bookingButton = new javax.swing.JButton();
         profileButton = new javax.swing.JButton();
-        otherButton = new javax.swing.JButton();
+        authorizationButton = new javax.swing.JButton();
         serviceFacilityButton = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
         residentManagementButton = new javax.swing.JButton();
@@ -468,7 +675,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
             homePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(homePanelLayout.createSequentialGroup()
                 .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 1188, Short.MAX_VALUE))
+                .addGap(0, 1008, Short.MAX_VALUE))
             .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         homePanelLayout.setVerticalGroup(
@@ -503,7 +710,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(116, 116, 116)
                 .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(857, Short.MAX_VALUE))
+                .addContainerGap(677, Short.MAX_VALUE))
         );
         residentPanelLayout.setVerticalGroup(
             residentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -519,133 +726,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
         );
 
         contentPanel.add(residentPanel, "resident");
-
-        apartmentPanel.setBackground(new java.awt.Color(255, 255, 255));
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setText("Diện tích");
-
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel5.setText("Số nước");
-
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel6.setText("Trạng thái");
-
-        jLabel7.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel7.setText("Số điện");
-
-        maCanHo.setText("Mã căn hộ");
-
-        dienTich.setText("Diện tích");
-
-        trangThai.setText("Trạng thái");
-
-        soDien.setText("Số điện");
-
-        soNuoc.setText("Số Nước");
-
-        jLabel1.setBackground(new java.awt.Color(102, 102, 255));
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Thêm căn hộ");
-
-        themButton.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        themButton.setText("Thêm");
-        themButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                themButtonActionPerformed(evt);
-            }
-        });
-
-        jLabel8.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel8.setText("Mã căn hộ");
-
-        jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel10.setText("V");
-        jLabel10.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel10MouseClicked(evt);
-            }
-        });
-
-        javax.swing.GroupLayout apartmentPanelLayout = new javax.swing.GroupLayout(apartmentPanel);
-        apartmentPanel.setLayout(apartmentPanelLayout);
-        apartmentPanelLayout.setHorizontalGroup(
-            apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(apartmentPanelLayout.createSequentialGroup()
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(apartmentPanelLayout.createSequentialGroup()
-                        .addGap(339, 339, 339)
-                        .addComponent(themButton, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(apartmentPanelLayout.createSequentialGroup()
-                        .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, apartmentPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(17, 17, 17))
-                            .addGroup(apartmentPanelLayout.createSequentialGroup()
-                                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(apartmentPanelLayout.createSequentialGroup()
-                                        .addGap(57, 57, 57)
-                                        .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                    .addGroup(apartmentPanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                        .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(soDien, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(trangThai, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(dienTich, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(maCanHo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE)
-                            .addComponent(soNuoc)
-                            .addGroup(apartmentPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(153, 153, 153)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        apartmentPanelLayout.setVerticalGroup(
-            apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(apartmentPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(maCanHo, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(dienTich, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(trangThai, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, apartmentPanelLayout.createSequentialGroup()
-                        .addGroup(apartmentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(soDien, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(soNuoc, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(themButton, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(422, 422, 422))
-        );
-
-        contentPanel.add(apartmentPanel, "apartment");
 
         mainParking.setBackground(new java.awt.Color(245, 245, 245));
 
@@ -735,7 +815,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(exportParkingSlotsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel17))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 359, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
                 .addComponent(searchParkingSlotField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         parkingToolbarLayout.setVerticalGroup(
@@ -875,7 +955,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         listParkingSlotPanel1.setLayout(listParkingSlotPanel1Layout);
         listParkingSlotPanel1Layout.setHorizontalGroup(
             listParkingSlotPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listParkingSlotScroll1, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(listParkingSlotScroll1)
         );
         listParkingSlotPanel1Layout.setVerticalGroup(
             listParkingSlotPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -886,20 +966,17 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jPanel4.setLayout(new java.awt.BorderLayout());
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/s1.jpg"))); // NOI18N
         jPanel4.add(jLabel2, java.awt.BorderLayout.CENTER);
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
         serviceID.setBackground(new java.awt.Color(240, 240, 240));
         serviceID.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        serviceID.setText("s1");
         serviceID.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
         serviceID.setFocusable(false);
 
         serviceName.setBackground(new java.awt.Color(240, 240, 240));
         serviceName.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        serviceName.setText("Gym");
         serviceName.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
         serviceName.setFocusable(false);
         serviceName.addActionListener(new java.awt.event.ActionListener() {
@@ -910,7 +987,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         price.setBackground(new java.awt.Color(240, 240, 240));
         price.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        price.setText("25000");
         price.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
         price.setFocusable(false);
 
@@ -926,63 +1002,51 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel21.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel21.setText("Price:");
 
-        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
-        jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        jTextArea1.setRows(5);
-        jTextArea1.setText("A fully equipped fitness center featuring modern \nworkout machines, free weights, and exercise areas. \nResidents can enjoy a healthy lifestyle with access to \ncardio equipment, strength training machines.\n");
-        jTextArea1.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
-        jTextArea1.setFocusable(false);
-        jScrollPane1.setViewportView(jTextArea1);
+        descriptionFacilities.setBackground(new java.awt.Color(240, 240, 240));
+        descriptionFacilities.setColumns(20);
+        descriptionFacilities.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        descriptionFacilities.setRows(5);
+        jScrollPane1.setViewportView(descriptionFacilities);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(28, 28, 28)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addGap(30, 30, 30)
-                            .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(2, 2, 2))
-                        .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(price, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 16, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(serviceID, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(serviceName, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addComponent(serviceName, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(price, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(serviceID, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(15, 15, 15)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(serviceID, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(serviceID, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(serviceName, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel19, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(serviceName, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel20, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(price, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(price, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(27, 27, 27))
         );
 
         jLabel22.setBackground(new java.awt.Color(0, 153, 153));
@@ -998,9 +1062,9 @@ public class HomeAdminForm extends javax.swing.JFrame {
             slotLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, slotLayout.createSequentialGroup()
                 .addGroup(slotLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel22, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(listParkingSlotPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(parkingToolbar1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel22, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(slotLayout.createSequentialGroup()
                         .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1056,13 +1120,15 @@ public class HomeAdminForm extends javax.swing.JFrame {
         invoiceID.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
         invoiceID.setFocusable(false);
 
-        jTextField5.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
-        jTextField5.setText("0977771637");
-        jTextField5.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
+        phoneNumber.setBackground(new java.awt.Color(240, 240, 240));
+        phoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
+        phoneNumber.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
+        phoneNumber.setFocusable(false);
 
-        jTextField7.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
-        jTextField7.setText("Vo Ngoc Hoang Lan");
-        jTextField7.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
+        nameResident.setBackground(new java.awt.Color(240, 240, 240));
+        nameResident.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
+        nameResident.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
+        nameResident.setFocusable(false);
 
         jSeparator1.setBackground(java.awt.Color.lightGray);
 
@@ -1119,11 +1185,11 @@ public class HomeAdminForm extends javax.swing.JFrame {
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addComponent(jLabel25)
                                 .addGap(18, 18, 18)
-                                .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(phoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addComponent(jLabel27)
                                 .addGap(18, 18, 18)
-                                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(nameResident, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                                     .addComponent(jLabel29)
@@ -1151,12 +1217,12 @@ public class HomeAdminForm extends javax.swing.JFrame {
                     .addComponent(jLabel26, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(phoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(nameResident, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1184,7 +1250,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 {"Community Room", "2", "Hour", "35000", null}
             },
             new String [] {
-                "Service Name", "Quantity", "Unit", "Unit Price", "Line Total"
+                "ServiceID", "Quantity", "Unit", "Unit Price", "Line Total"
             }
         ));
         jScrollPane2.setViewportView(listFacilitiesSubscribiedTable);
@@ -1332,7 +1398,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(exportServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel34))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 359, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
                 .addComponent(searchServiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         serviceToolbarLayout.setVerticalGroup(
@@ -1373,7 +1439,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 {"s4", "Electrical", "Albert", "kilogram", "500000"}
             },
             new String [] {
-                "ServiceID", "Service Name", "Service Provider Name", "Unit", "Price"
+                "ServiceID", "Service Name", "Provider Name", "Unit", "Price"
             }
         ));
         listServiceScroll.setViewportView(listServiceTable);
@@ -1405,26 +1471,645 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         contentPanel.add(servicePanel, "service");
 
+        complaintPanel.setBackground(new java.awt.Color(245, 245, 245));
+
+        complaintToolbar.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchComplaintField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        searchComplaintField.setText("Search...");
+
+        addComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        addComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/61658_add_green_plus_icon.png"))); // NOI18N
+        addComplaintButton.setContentAreaFilled(false);
+        addComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        addComplaintButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addComplaintButtonActionPerformed(evt);
+            }
+        });
+
+        updateComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        updateComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
+        updateComplaintButton.setContentAreaFilled(false);
+        updateComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        updateComplaintButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateComplaintButtonActionPerformed(evt);
+            }
+        });
+
+        deleteComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        deleteComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
+        deleteComplaintButton.setContentAreaFilled(false);
+        deleteComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteComplaintButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteComplaintButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel35.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel35.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel35.setText("ADD");
+
+        jLabel36.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel36.setText("UPDATE");
+
+        jLabel37.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel37.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel37.setText("DELETE");
+
+        toggleMenuLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        toggleMenuLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
+        toggleMenuLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                toggleMenuLabel2MouseClicked(evt);
+            }
+        });
+
+        detailComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        detailComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-detail-48.png"))); // NOI18N
+        detailComplaintButton.setContentAreaFilled(false);
+        detailComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        detailComplaintButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                detailComplaintButtonActionPerformed(evt);
+            }
+        });
+
+        assignComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        assignComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delegate-48 (1).png"))); // NOI18N
+        assignComplaintButton.setContentAreaFilled(false);
+        assignComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        assignComplaintButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                assignComplaintButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel38.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel38.setText("DETAIL");
+
+        jLabel39.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel39.setText("ASSIGN");
+
+        javax.swing.GroupLayout complaintToolbarLayout = new javax.swing.GroupLayout(complaintToolbar);
+        complaintToolbar.setLayout(complaintToolbarLayout);
+        complaintToolbarLayout.setHorizontalGroup(
+            complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(complaintToolbarLayout.createSequentialGroup()
+                .addComponent(toggleMenuLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(addComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(deleteComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel37, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(detailComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel38, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(assignComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel39, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 94, Short.MAX_VALUE)
+                .addComponent(searchComplaintField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        complaintToolbarLayout.setVerticalGroup(
+            complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(complaintToolbarLayout.createSequentialGroup()
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(complaintToolbarLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(searchComplaintField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(complaintToolbarLayout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(toggleMenuLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(complaintToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(complaintToolbarLayout.createSequentialGroup()
+                        .addComponent(assignComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(complaintToolbarLayout.createSequentialGroup()
+                        .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(updateComplaintButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(addComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(deleteComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(detailComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(5, 5, 5)
+                        .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel35, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel37, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel38, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel39, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+        );
+
+        listComplaintPanel.setBackground(new java.awt.Color(0, 153, 153));
+        listComplaintPanel.setLayout(new java.awt.BorderLayout());
+
+        listComplaintTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {"A101", "Staff", "Car", "Unavailable", "092849284"},
+                {"A102", "Resident", "Bike", "Unavailable", "76482794723"},
+                {"B202", "Staff", "Bike", "Unavailable", "93875927394"},
+                {"C101", "Staff", "Car", "Available", "N/A"}
+            },
+            new String [] {
+                "ComplaintID", "Complaint Title", "Complaint By", "Date", "Complaint Status"
+            }
+        ));
+        listComplaintScroll.setViewportView(listComplaintTable);
+
+        listComplaintPanel.add(listComplaintScroll, java.awt.BorderLayout.CENTER);
+
+        listComplaintLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        listComplaintLabel.setForeground(new java.awt.Color(255, 255, 255));
+        listComplaintLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        listComplaintLabel.setText("LIST OF COMPLAINTS");
+        listComplaintLabel.setPreferredSize(new java.awt.Dimension(245, 40));
+        listComplaintPanel.add(listComplaintLabel, java.awt.BorderLayout.NORTH);
+
+        javax.swing.GroupLayout complaintPanelLayout = new javax.swing.GroupLayout(complaintPanel);
+        complaintPanel.setLayout(complaintPanelLayout);
+        complaintPanelLayout.setHorizontalGroup(
+            complaintPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(complaintToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listComplaintPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        complaintPanelLayout.setVerticalGroup(
+            complaintPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(complaintPanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addComponent(complaintToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(listComplaintPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+        );
+
+        contentPanel.add(complaintPanel, "complaint");
+
+        authorizationPanel.setBackground(new java.awt.Color(245, 245, 245));
+
+        authorizationToolbar.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchAuthorizationField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        searchAuthorizationField.setText("Search...");
+
+        updateAuthorizationButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        updateAuthorizationButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
+        updateAuthorizationButton.setContentAreaFilled(false);
+        updateAuthorizationButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        updateAuthorizationButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateAuthorizationButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel41.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel41.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel41.setText("UPDATE");
+
+        toggleMenuLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        toggleMenuLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
+        toggleMenuLabel3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                toggleMenuLabel3MouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout authorizationToolbarLayout = new javax.swing.GroupLayout(authorizationToolbar);
+        authorizationToolbar.setLayout(authorizationToolbarLayout);
+        authorizationToolbarLayout.setHorizontalGroup(
+            authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(authorizationToolbarLayout.createSequentialGroup()
+                .addComponent(toggleMenuLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(updateAuthorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel41))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 435, Short.MAX_VALUE)
+                .addComponent(searchAuthorizationField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        authorizationToolbarLayout.setVerticalGroup(
+            authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(authorizationToolbarLayout.createSequentialGroup()
+                .addGroup(authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(authorizationToolbarLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(searchAuthorizationField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(authorizationToolbarLayout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(toggleMenuLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(authorizationToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(updateAuthorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5)
+                .addComponent(jLabel41, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        listAuthorizationPanel.setBackground(new java.awt.Color(0, 153, 153));
+        listAuthorizationPanel.setLayout(new java.awt.BorderLayout());
+
+        listAuthorizationTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {"A101", "Staff", "Car", "Unavailable"},
+                {"A102", "Resident", "Bike", "Unavailable"},
+                {"B202", "Staff", "Bike", "Unavailable"},
+                {"C101", "Staff", "Car", "Available"}
+            },
+            new String [] {
+                "Username", "Email", "Role", "ResidentID"
+            }
+        ));
+        listComplaintScroll1.setViewportView(listAuthorizationTable);
+
+        listAuthorizationPanel.add(listComplaintScroll1, java.awt.BorderLayout.CENTER);
+
+        listComplaintLabel1.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        listComplaintLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        listComplaintLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        listComplaintLabel1.setText("LIST OF AUTHORIZATION ");
+        listComplaintLabel1.setPreferredSize(new java.awt.Dimension(245, 40));
+        listAuthorizationPanel.add(listComplaintLabel1, java.awt.BorderLayout.NORTH);
+
+        javax.swing.GroupLayout authorizationPanelLayout = new javax.swing.GroupLayout(authorizationPanel);
+        authorizationPanel.setLayout(authorizationPanelLayout);
+        authorizationPanelLayout.setHorizontalGroup(
+            authorizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(authorizationToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listAuthorizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        authorizationPanelLayout.setVerticalGroup(
+            authorizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(authorizationPanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addComponent(authorizationToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(listAuthorizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+        );
+
+        contentPanel.add(authorizationPanel, "authorization");
+
+        facilityPanel.setBackground(new java.awt.Color(245, 245, 245));
+
+        facilityToolbar.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchFacilityField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        searchFacilityField.setText("Search...");
+
+        addFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        addFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/61658_add_green_plus_icon.png"))); // NOI18N
+        addFacilityButton.setContentAreaFilled(false);
+        addFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        addFacilityButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addFacilityButtonActionPerformed(evt);
+            }
+        });
+
+        updateFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        updateFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
+        updateFacilityButton.setContentAreaFilled(false);
+        updateFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        updateFacilityButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateFacilityButtonActionPerformed(evt);
+            }
+        });
+
+        deleteFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        deleteFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
+        deleteFacilityButton.setContentAreaFilled(false);
+        deleteFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteFacilityButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteFacilityButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel40.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel40.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel40.setText("ADD");
+
+        jLabel42.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel42.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel42.setText("UPDATE");
+
+        jLabel43.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel43.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel43.setText("DELETE");
+
+        toggleMenuLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        toggleMenuLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
+        toggleMenuLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                toggleMenuLabel4MouseClicked(evt);
+            }
+        });
+
+        detailFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        detailFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-detail-48.png"))); // NOI18N
+        detailFacilityButton.setContentAreaFilled(false);
+        detailFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        detailFacilityButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                detailFacilityButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel44.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel44.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel44.setText("DETAIL");
+
+        javax.swing.GroupLayout facilityToolbarLayout = new javax.swing.GroupLayout(facilityToolbar);
+        facilityToolbar.setLayout(facilityToolbarLayout);
+        facilityToolbarLayout.setHorizontalGroup(
+            facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(facilityToolbarLayout.createSequentialGroup()
+                .addComponent(toggleMenuLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(addFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel40, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel42, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(deleteFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel43, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(detailFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 186, Short.MAX_VALUE)
+                .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        facilityToolbarLayout.setVerticalGroup(
+            facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(facilityToolbarLayout.createSequentialGroup()
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(facilityToolbarLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(facilityToolbarLayout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(toggleMenuLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(facilityToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(updateFacilityButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(addFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(detailFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel40, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel42, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel43, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        );
+
+        listFacilityPanel.setBackground(new java.awt.Color(0, 153, 153));
+        listFacilityPanel.setLayout(new java.awt.BorderLayout());
+
+        listFacilityTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {"A101", "Staff", "Car", "Unavailable", null, "092849284"},
+                {"A102", "Resident", "Bike", "Unavailable", null, "76482794723"},
+                {"B202", "Staff", "Bike", "Unavailable", null, "93875927394"},
+                {"C101", "Staff", "Car", "Available", null, "N/A"}
+            },
+            new String [] {
+                "FacilityID", "Facility Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+            }
+        ));
+        listComplaintScroll2.setViewportView(listFacilityTable);
+
+        listFacilityPanel.add(listComplaintScroll2, java.awt.BorderLayout.CENTER);
+
+        listComplaintLabel2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        listComplaintLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        listComplaintLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        listComplaintLabel2.setText("LIST OF FACILITIES");
+        listComplaintLabel2.setPreferredSize(new java.awt.Dimension(245, 40));
+        listFacilityPanel.add(listComplaintLabel2, java.awt.BorderLayout.NORTH);
+
+        javax.swing.GroupLayout facilityPanelLayout = new javax.swing.GroupLayout(facilityPanel);
+        facilityPanel.setLayout(facilityPanelLayout);
+        facilityPanelLayout.setHorizontalGroup(
+            facilityPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(facilityToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listFacilityPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        facilityPanelLayout.setVerticalGroup(
+            facilityPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(facilityPanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addComponent(facilityToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(listFacilityPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+        );
+
+        contentPanel.add(facilityPanel, "facility");
+
+        invoicePanel.setBackground(new java.awt.Color(245, 245, 245));
+
+        invoiceToolbar.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchInvoiceField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        searchInvoiceField.setText("Search...");
+
+        updateInvoiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        updateInvoiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
+        updateInvoiceButton.setContentAreaFilled(false);
+        updateInvoiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        updateInvoiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateInvoiceButtonActionPerformed(evt);
+            }
+        });
+
+        deleteInvoiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        deleteInvoiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
+        deleteInvoiceButton.setContentAreaFilled(false);
+        deleteInvoiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteInvoiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteInvoiceButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel46.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel46.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel46.setText("UPDATE");
+
+        jLabel47.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel47.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel47.setText("DELETE");
+
+        toggleMenuLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        toggleMenuLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
+        toggleMenuLabel5.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                toggleMenuLabel5MouseClicked(evt);
+            }
+        });
+
+        detailInvoiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        detailInvoiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-detail-48.png"))); // NOI18N
+        detailInvoiceButton.setContentAreaFilled(false);
+        detailInvoiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        detailInvoiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                detailInvoiceButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel48.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        jLabel48.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel48.setText("DETAIL");
+
+        javax.swing.GroupLayout invoiceToolbarLayout = new javax.swing.GroupLayout(invoiceToolbar);
+        invoiceToolbar.setLayout(invoiceToolbarLayout);
+        invoiceToolbarLayout.setHorizontalGroup(
+            invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                .addComponent(toggleMenuLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                        .addComponent(updateInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(deleteInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                        .addComponent(jLabel46)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel47)))
+                .addGap(18, 18, 18)
+                .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(detailInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel48))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 263, Short.MAX_VALUE)
+                .addComponent(searchInvoiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        invoiceToolbarLayout.setVerticalGroup(
+            invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(searchInvoiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addComponent(toggleMenuLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(invoiceToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(updateInvoiceButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(deleteInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(detailInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5)
+                .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel46, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel47, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel48, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        );
+
+        listInvoicePanel.setBackground(new java.awt.Color(0, 153, 153));
+        listInvoicePanel.setLayout(new java.awt.BorderLayout());
+
+        listInvoiceTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {"A101", null, "Staff", "Car", "Unavailable"},
+                {"A102", null, "Resident", "Bike", "Unavailable"},
+                {"B202", null, "Staff", "Bike", "Unavailable"},
+                {"C101", null, "Staff", "Car", "Available"}
+            },
+            new String [] {
+                "InvoiceID", "ResidentID", "Created Date", "Total Fee", "Status"
+            }
+        ));
+        listComplaintScroll3.setViewportView(listInvoiceTable);
+
+        listInvoicePanel.add(listComplaintScroll3, java.awt.BorderLayout.CENTER);
+
+        listComplaintLabel3.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        listComplaintLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        listComplaintLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        listComplaintLabel3.setText("LIST OF INVOICE");
+        listComplaintLabel3.setPreferredSize(new java.awt.Dimension(245, 40));
+        listInvoicePanel.add(listComplaintLabel3, java.awt.BorderLayout.NORTH);
+
+        javax.swing.GroupLayout invoicePanelLayout = new javax.swing.GroupLayout(invoicePanel);
+        invoicePanel.setLayout(invoicePanelLayout);
+        invoicePanelLayout.setHorizontalGroup(
+            invoicePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(invoiceToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listInvoicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        invoicePanelLayout.setVerticalGroup(
+            invoicePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(invoicePanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addComponent(invoiceToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(listInvoicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+        );
+
+        contentPanel.add(invoicePanel, "invoice");
+
         mainPanel.add(contentPanel, java.awt.BorderLayout.CENTER);
 
         scrollPane.setPreferredSize(new java.awt.Dimension(230, 551));
 
         menuPanel.setBackground(new java.awt.Color(255, 255, 255));
 
-        accountsButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        accountsButton.setText("Accounts");
-        accountsButton.setContentAreaFilled(false);
+        bookingButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        bookingButton.setText("Booking");
+        bookingButton.setContentAreaFilled(false);
+        bookingButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bookingButtonActionPerformed(evt);
+            }
+        });
 
         profileButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        profileButton.setText("Profile");
+        profileButton.setText("Invoice");
         profileButton.setContentAreaFilled(false);
-
-        otherButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        otherButton.setText("Other");
-        otherButton.setContentAreaFilled(false);
-        otherButton.addActionListener(new java.awt.event.ActionListener() {
+        profileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                otherButtonActionPerformed(evt);
+                profileButtonActionPerformed(evt);
+            }
+        });
+
+        authorizationButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        authorizationButton.setText("Authorization");
+        authorizationButton.setContentAreaFilled(false);
+        authorizationButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                authorizationButtonActionPerformed(evt);
             }
         });
 
@@ -1455,6 +2140,11 @@ public class HomeAdminForm extends javax.swing.JFrame {
         complaintsButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         complaintsButton.setText("Complaints");
         complaintsButton.setContentAreaFilled(false);
+        complaintsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                complaintsButtonActionPerformed(evt);
+            }
+        });
 
         homeButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         homeButton.setText("Home");
@@ -1521,8 +2211,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
             .addComponent(complaintsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(profileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(otherButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(accountsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(authorizationButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(bookingButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(serviceSub, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(serviceFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
             .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1555,11 +2245,11 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(serviceSub, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accountsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(bookingButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(profileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(otherButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(authorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 109, Short.MAX_VALUE)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(5, 5, 5)
@@ -1585,31 +2275,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void themButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_themButtonActionPerformed
-        // TODO add your handling code here:
-        int maCanHoText = Integer.parseInt(maCanHo.getText());
-        double dienTichText = Double.parseDouble(dienTich.getText());
-        String trangThaiText = trangThai.getText();
-        int soDienText = Integer.parseInt(soDien.getText());
-        int soNuocText = Integer.parseInt(soNuoc.getText());
-
-        //Tao Doi Tuong Doi Bong
-        CanHo ch = new CanHo();
-
-        //Lay ket qua tu CSDL
-        int countRecord = ch.themCanHo(maCanHoText, dienTichText, trangThaiText, soDienText, soNuocText);
-
-        if (countRecord > 0) {
-            JOptionPane.showMessageDialog(this, "Thêm thành công!");
-            hide();
-        }
-    }//GEN-LAST:event_themButtonActionPerformed
-
-    private void jLabel10MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel10MouseClicked
-        // TODO add your handling code here:
-        s.toggleMenu();
-    }//GEN-LAST:event_jLabel10MouseClicked
-
     private void jLabel12MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MouseClicked
         // TODO add your handling code here:
         s.toggleMenu();
@@ -1624,7 +2289,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         // TODO add your handling code here:
         addParkingSlotButton.setBackground(Color.LIGHT_GRAY); // Set màu nền cho JButton
         addParkingSlotButton.setContentAreaFilled(true);
-        AddParkingForm a = new AddParkingForm(this, true); // 'this' là Frame cha
+        AddParkingForm a = new AddParkingForm(this, true, parkingService); // 'this' là Frame cha
         a.setVisible(true); // Code sẽ dừng ở đây cho đến khi dialog đóng
         addParkingSlotButton.setContentAreaFilled(false);
         this.updateTableParking();
@@ -1703,7 +2368,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
             ParkingSlot selectedSlot = new ParkingSlot(slotName, slotType, vehicle, status, licensePlate);
 
             // Truyền cả đối tượng này cho form Update
-            UpdateParkingForm updateForm = new UpdateParkingForm(this, true, selectedSlot);
+            UpdateParkingForm updateForm = new UpdateParkingForm(this, true, selectedSlot, parkingService);
             updateForm.setVisible(true); // Hiển thị form update
 
             // Sau khi form update đóng, cập nhật lại bảng
@@ -1734,21 +2399,38 @@ public class HomeAdminForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Lỗi: Không tìm thấy dịch vụ đã chọn.", "Lỗi Dữ Liệu", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
-        // Mở dialog chọn giờ và truyền thông tin cần thiết
-        BookFacilitiesForm timeDialog = new BookFacilitiesForm(this, true, selectedFacility, facilityService);
+        
+        int currentInvoiceId = -1;
+        if (!invoiceID.getText().isEmpty()) {
+            currentInvoiceId = Integer.parseInt(invoiceID.getText());
+        }
+    
+        BookFacilitiesForm timeDialog = new BookFacilitiesForm(this, true, selectedFacility, facilityService, currentInvoiceId);
         timeDialog.setVisible(true);
 
         if (timeDialog.isConfirmed()) {
             List<String> selectedSlots = timeDialog.getSelectedTimeSlots();
             if (selectedSlots.isEmpty()) {
-                return; // Không làm gì nếu người dùng không chọn khung giờ nào
+                return;
             }
 
-            // Tạo hóa đơn nếu cần
-            int currentInvoiceId;
+            // Tạo hóa đơn mới nếu chưa có
             if (invoiceID.getText().isEmpty()) {
-                int newId = invoiceService.createInvoice(0);
+                // TẢI VÀ HIỂN THỊ THÔNG TIN CƯ DÂN KHI TẠO HÓA ĐƠN MỚI
+                if (this.currentResidentId != null) {
+                    Resident resident = residentService.getResidentById(this.currentResidentId);
+                    if (resident != null) {
+                        nameResident.setText(resident.getFullName());
+                        phoneNumber.setText(resident.getPhoneNumber());
+                    } else {
+                        nameResident.setText("Resident not found");
+                        phoneNumber.setText("");
+                        JOptionPane.showMessageDialog(this, "Could not find resident with ID: " + this.currentResidentId, "Data Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+                
+                // Tạo hóa đơn và gán mã cư dân
+                int newId = invoiceService.createInvoice(this.currentResidentId, 0); 
                 if (newId != -1) {
                     invoiceID.setText(String.valueOf(newId));
                     currentInvoiceId = newId;
@@ -1760,7 +2442,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 currentInvoiceId = Integer.parseInt(invoiceID.getText());
             }
 
-            // Thêm từng khung giờ đã chọn vào CSDL
             for (String slot : selectedSlots) {
                 SubscribedFacility newItem = new SubscribedFacility();
                 newItem.setInvoiceId(currentInvoiceId);
@@ -1771,11 +2452,10 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 subscribedFacilityService.addOrUpdateFacility(newItem);
             }
 
-            // Cập nhật lại giao diện
             updateSubscribedFacilitiesTable();
             handleInvoiceUpdate();
             JOptionPane.showMessageDialog(this, "Đã đăng ký thành công " + selectedSlots.size() + " khung giờ.");
-        }  
+        }
     }//GEN-LAST:event_bookFacilitiesActionPerformed
 
     private void serviceNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_serviceNameActionPerformed
@@ -1829,7 +2509,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
         // TODO add your handling code here:
-        showPanel(contentPanel, "booking");
+        showPanel(contentPanel, "facility");
     }//GEN-LAST:event_jButton10ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
@@ -1869,20 +2549,101 @@ public class HomeAdminForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_serviceFacilityButtonActionPerformed
 
-    private void otherButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherButtonActionPerformed
+    private void authorizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_authorizationButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_otherButtonActionPerformed
+        showPanel(contentPanel, "authorization");
+    }//GEN-LAST:event_authorizationButtonActionPerformed
 
     private void addServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addServiceButtonActionPerformed
         // TODO add your handling code here:
+        addServiceButton.setBackground(Color.LIGHT_GRAY);
+        addServiceButton.setContentAreaFilled(true);
+        
+        // Mở form thêm mới và truyền vào đối tượng service đã được khởi tạo
+        AddCompulsoryServiceForm addForm = new AddCompulsoryServiceForm(this, true, this.compulsoryServiceService);
+        addForm.setVisible(true); // Chờ cho đến khi dialog được đóng
+
+        addServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
+        updateServiceTable(); // Cập nhật lại bảng sau khi thêm
+        
     }//GEN-LAST:event_addServiceButtonActionPerformed
 
     private void updateServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateServiceButtonActionPerformed
         // TODO add your handling code here:
+        updateServiceButton.setBackground(Color.LIGHT_GRAY);
+        updateServiceButton.setContentAreaFilled(true);
+
+        int selectedRow = listServiceTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a service to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else if (listServiceTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one service to update.", "Multiple Selections", JOptionPane.WARNING_MESSAGE);
+        } else {
+            try {
+                // Lấy dữ liệu từ dòng đã chọn trong bảng
+                String serviceId = listServiceTable.getValueAt(selectedRow, 0).toString();
+                String serviceName = listServiceTable.getValueAt(selectedRow, 1).toString();
+                String providerId = listServiceTable.getValueAt(selectedRow, 2).toString();
+                String unit = listServiceTable.getValueAt(selectedRow, 3).toString();
+                BigDecimal price = new BigDecimal(listServiceTable.getValueAt(selectedRow, 4).toString());
+
+                // Tạo đối tượng CompulsoryService từ dữ liệu đã lấy
+                CompulsoryService serviceToUpdate = new CompulsoryService(serviceId, serviceName, providerId, unit, price);
+
+                // Mở form cập nhật và truyền đối tượng service cùng service instance
+                UpdateCompulsoryServiceForm updateForm = new UpdateCompulsoryServiceForm(this, true, serviceToUpdate, this.compulsoryServiceService);
+                updateForm.setVisible(true);
+
+                // Cập nhật lại bảng sau khi dialog đóng
+                updateServiceTable();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error retrieving service data: " + e.getMessage(), "Data Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+
+        updateServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
     }//GEN-LAST:event_updateServiceButtonActionPerformed
 
     private void deleteServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteServiceButtonActionPerformed
         // TODO add your handling code here:
+        deleteServiceButton.setBackground(Color.LIGHT_GRAY);
+        deleteServiceButton.setContentAreaFilled(true);
+
+        int[] selectedRows = listServiceTable.getSelectedRows();
+
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Please select at least one service to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete the selected service(s)?",
+                    "Confirm Deletion",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean allSucceeded = true;
+                // Lặp ngược để tránh lỗi chỉ số khi xóa nhiều dòng
+                for (int i = selectedRows.length - 1; i >= 0; i--) {
+                    int modelRow = listServiceTable.convertRowIndexToModel(selectedRows[i]);
+                    String serviceId = listServiceTable.getModel().getValueAt(modelRow, 0).toString();
+                    
+                    if (!compulsoryServiceService.deleteService(serviceId)) {
+                        allSucceeded = false;
+                    }
+                }
+                
+                updateServiceTable(); // Cập nhật lại bảng
+                
+                if (allSucceeded) {
+                    JOptionPane.showMessageDialog(this, "Service(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Could not delete all selected services. Please check logs for details.", "Deletion Failed", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        
+        deleteServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
     }//GEN-LAST:event_deleteServiceButtonActionPerformed
 
     private void toggleMenuLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel1MouseClicked
@@ -1891,28 +2652,552 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
     private void printInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printInvoiceButtonActionPerformed
         // TODO add your handling code here:
+        // 1. Kiểm tra xem có hóa đơn để xử lý không
         if (invoiceID.getText().isEmpty()) {
-            return; // Không có gì để làm
+            JOptionPane.showMessageDialog(this, "Không có hóa đơn nào để xử lý.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có muốn hoàn thành hóa đơn này và bắt đầu một hóa đơn mới không?",
-                "Hoàn thành hóa đơn",
-                JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            // Reset lại toàn bộ các trường thông tin hóa đơn
-            invoiceID.setText("");
-            totalBill.setText("");
-            cashReceived.setText("");
-            changeReturned.setText("");
-
-            // Gọi hàm cập nhật bảng chi tiết, nó sẽ tự xóa các dòng vì không có invoiceID
-            updateSubscribedFacilitiesTable(); 
-
-            JOptionPane.showMessageDialog(this, "Hóa đơn đã hoàn thành. Sẵn sàng cho hóa đơn tiếp theo.");
+    
+        // 2. Lấy và xác thực dữ liệu từ các trường trên form
+        int invoiceId;
+        double totalFee, cashReceivedValue = 0, changeReturnedValue = 0;
+        String status;
+    
+        try {
+            invoiceId = Integer.parseInt(invoiceID.getText());
+            totalFee = Double.parseDouble(totalBill.getText().replace(" ", ""));
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Lỗi định dạng số trên hóa đơn.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+    
+        // 3. Xác định trạng thái và giá trị thanh toán
+        String cashReceivedText = cashReceived.getText().trim();
+        if (cashReceivedText.isEmpty()) {
+            status = "Pending"; // Nếu không nhập tiền mặt, trạng thái là "Chờ thanh toán"
+        } else {
+            try {
+                cashReceivedValue = Double.parseDouble(cashReceivedText.replace(" ", ""));
+                changeReturnedValue = Double.parseDouble(changeReturned.getText().replace(" ", ""));
+                status = "Completed"; // Nếu có nhập tiền mặt, trạng thái là "Hoàn thành"
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Số tiền nhận không hợp lệ.", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+    
+        // 4. Cập nhật thông tin thanh toán và trạng thái vào CSDL
+        invoiceService.finalizePayment(invoiceId, totalFee, cashReceivedValue, changeReturnedValue, status);
+    
+        // 5. Mở hộp thoại để người dùng chọn nơi lưu file PDF
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu hóa đơn PDF");
+        String suggestedFileName = "Invoice_" + invoiceId + ".pdf";
+        fileChooser.setSelectedFile(new java.io.File(suggestedFileName));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Documents", "pdf"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                filePath += ".pdf";
+            }
+            // 6. Tạo và ghi nội dung vào file PDF (Giữ nguyên nội dung PDF)
+            try {
+                Document document = new Document();
+                PdfWriter.getInstance(document, new FileOutputStream(filePath));
+                document.open();
+
+                Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+                Font boldFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+                Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+
+                Paragraph title = new Paragraph("SERVICE INVOICE", titleFont);
+                title.setAlignment(Paragraph.ALIGN_CENTER);
+                document.add(title);
+                document.add(new Paragraph(" "));
+
+                document.add(new Paragraph("Invoice ID: " + invoiceID.getText(), normalFont));
+                document.add(new Paragraph("Date Created: " + new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date()), normalFont));
+                document.add(new Paragraph("Resident Name: " + nameResident.getText(), normalFont));
+                document.add(new Paragraph("Phone Number: " + phoneNumber.getText(), normalFont));
+                document.add(new Paragraph("-------------------------------------------------------------------"));
+                document.add(new Paragraph(" "));
+
+                Map<String, String> serviceNameMap = facilityService.getAllFacilities().stream()
+                    .collect(Collectors.toMap(Facility::getServiceId, Facility::getServiceName));
+
+                PdfPTable table = new PdfPTable(6);
+                table.setWidthPercentage(100);
+                table.setWidths(new float[]{1.5f, 3f, 1.5f, 1.5f, 2f, 2f});
+
+                String[] headers = {"Service ID", "Service Name", "Quantity", "Unit", "Unit Price", "Line Total"};
+                for (String header : headers) {
+                    PdfPCell headerCell = new PdfPCell(new Phrase(header, boldFont));
+                    headerCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
+                    table.addCell(headerCell);
+                }
+
+                DefaultTableModel model = (DefaultTableModel) listFacilitiesSubscribiedTable.getModel();
+                for (int row = 0; row < model.getRowCount(); row++) {
+                    String serviceId = model.getValueAt(row, 0).toString();
+                    String serviceNameValue = serviceNameMap.getOrDefault(serviceId, "N/A");
+                    
+                    table.addCell(new Phrase(serviceId, normalFont));
+                    table.addCell(new Phrase(serviceNameValue, normalFont));
+                    
+                    for (int col = 1; col < model.getColumnCount(); col++) {
+                        table.addCell(new Phrase(model.getValueAt(row, col).toString(), normalFont));
+                    }
+                }
+                document.add(table);
+                document.add(new Paragraph("-------------------------------------------------------------------"));
+
+                document.add(new Paragraph("Total Fee: " + totalBill.getText() + " VND", boldFont));
+                document.add(new Paragraph("Cash Received: " + cashReceived.getText() + " VND", normalFont));
+                document.add(new Paragraph("Change Returned: " + changeReturned.getText() + " VND", normalFont));
+                document.add(new Paragraph(" "));
+                document.add(new Paragraph(" "));
+
+                try {
+                    java.net.URL qrUrl = getClass().getResource("/icon/QR.jpg");
+                    if (qrUrl != null) {
+                        com.itextpdf.text.Image qrImage = com.itextpdf.text.Image.getInstance(qrUrl);
+                        qrImage.scaleToFit(240, 240);
+                        qrImage.setAlignment(com.itextpdf.text.Image.ALIGN_CENTER);
+                        document.add(qrImage);
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Could not find or add QR image.");
+                    ex.printStackTrace();
+                }
+
+                document.close();
+                
+                JOptionPane.showMessageDialog(this, "PDF invoice exported successfully!\nSaved at: " + filePath, "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (DocumentException | IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error creating PDF file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    
+        // 7. Làm mới giao diện sau khi hoàn tất
+        resetInvoiceFields();
+        updateInvoiceTable();
     }//GEN-LAST:event_printInvoiceButtonActionPerformed
+
+    private void addComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addComplaintButtonActionPerformed
+        // TODO add your handling code here:
+        addComplaintButton.setBackground(Color.LIGHT_GRAY); // Set màu nền cho JButton
+        addComplaintButton.setContentAreaFilled(true);
+        AddComplaintForm a = new AddComplaintForm(this, true, complaintService); // 'this' là Frame cha
+        a.setVisible(true); // Code sẽ dừng ở đây cho đến khi dialog đóng
+        addComplaintButton.setContentAreaFilled(false);
+        this.updateComplaintsTable();
+    }//GEN-LAST:event_addComplaintButtonActionPerformed
+
+    private void updateComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateComplaintButtonActionPerformed
+        // TODO add your handling code here:
+        updateComplaintButton.setBackground(Color.LIGHT_GRAY);
+        updateComplaintButton.setContentAreaFilled(true);
+
+        int selectedRow = listComplaintTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select one complaint to update.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else if (listComplaintTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one complaint to update.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            String complaintId = listComplaintTable.getValueAt(selectedRow, 0).toString();
+
+            // Tìm đối tượng Complaint đầy đủ từ service
+            Complaint complaintToUpdate = complaintService.getAllComplaints().stream()
+                    .filter(c -> c.getComplaintId().equals(complaintId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (complaintToUpdate != null) {
+                // Truyền đối tượng complaint và service vào form cập nhật
+                UpdateComplaintForm updateForm = new UpdateComplaintForm(this, true, complaintToUpdate, complaintService);
+                updateForm.setVisible(true);
+
+                // Sau khi form đóng, làm mới lại bảng
+                updateComplaintsTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not find the selected complaint details.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        updateComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
+        
+    }//GEN-LAST:event_updateComplaintButtonActionPerformed
+
+    private void deleteComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteComplaintButtonActionPerformed
+        // TODO add your handling code here:
+        deleteComplaintButton.setContentAreaFilled(true);
+        deleteComplaintButton.setBackground(Color.LIGHT_GRAY);
+
+        int[] selectedRows = listComplaintTable.getSelectedRows();
+        if (selectedRows.length > 0) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete the selected complaint(s)?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean allDeleted = true;
+                // Lặp ngược để tránh lỗi chỉ số khi xóa nhiều dòng
+                for (int i = selectedRows.length - 1; i >= 0; i--) {
+                    int row = selectedRows[i];
+                    // Lấy ID của phản ánh từ cột đầu tiên (index 0)
+                    String complaintId = listComplaintTable.getValueAt(row, 0).toString();
+                    
+                    if (!complaintService.deleteComplaint(complaintId)) {
+                        allDeleted = false; // Đánh dấu nếu có bất kỳ lỗi xóa nào
+                    }
+                }
+
+                // Cập nhật lại bảng để hiển thị thay đổi
+                updateComplaintsTable();
+
+                if (allDeleted) {
+                    JOptionPane.showMessageDialog(this, "Complaint(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Could not delete all selected complaints. Please check the logs.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select at least one complaint to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        }
+        
+        deleteComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
+        
+    }//GEN-LAST:event_deleteComplaintButtonActionPerformed
+
+    private void toggleMenuLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel2MouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_toggleMenuLabel2MouseClicked
+
+    private void complaintsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_complaintsButtonActionPerformed
+        // TODO add your handling code here:
+        showPanel(contentPanel, "complaint");
+    }//GEN-LAST:event_complaintsButtonActionPerformed
+
+    private void detailComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailComplaintButtonActionPerformed
+        // TODO add your handling code here:
+        detailComplaintButton.setBackground(Color.LIGHT_GRAY);
+        detailComplaintButton.setContentAreaFilled(true);
+
+        int selectedRow = listComplaintTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select one complaint to view detail.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else if (listComplaintTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one complaint to view detail.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            String complaintId = listComplaintTable.getValueAt(selectedRow, 0).toString();
+
+            // Tìm đối tượng Complaint đầy đủ từ service
+            Complaint complaintToUpdate = complaintService.getAllComplaints().stream()
+                    .filter(c -> c.getComplaintId().equals(complaintId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (complaintToUpdate != null) {
+                // Truyền đối tượng complaint vào form cập nhật
+                DetailComplaintForm detailForm = new DetailComplaintForm(this, true, complaintToUpdate);
+                detailForm.setVisible(true);
+
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not find the selected complaint details.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        detailComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
+    }//GEN-LAST:event_detailComplaintButtonActionPerformed
+
+    private void assignComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_assignComplaintButtonActionPerformed
+        // TODO add your handling code here:
+        assignComplaintButton.setBackground(java.awt.Color.LIGHT_GRAY);
+        assignComplaintButton.setContentAreaFilled(true);
+
+        int selectedRow = listComplaintTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select one complaint to assign.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else if (listComplaintTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one complaint.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            String complaintId = listComplaintTable.getValueAt(selectedRow, 0).toString();
+            
+            Complaint selectedComplaint = complaintService.getAllComplaints().stream()
+                .filter(c -> c.getComplaintId().equals(complaintId))
+                .findFirst()
+                .orElse(null);
+
+            if (selectedComplaint != null) {
+                String currentStatus = selectedComplaint.getStatus();
+                if ("In Progress".equalsIgnoreCase(currentStatus) || "Resolved".equalsIgnoreCase(currentStatus) || "Closed".equalsIgnoreCase(currentStatus)) {
+                    JOptionPane.showMessageDialog(this, "This complaint has already been assigned or completed.", "Cannot Assign", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    // Mở form Assign và truyền các service đã được đổi tên
+                    AssignComplaintForm assignForm = new AssignComplaintForm(this, true, selectedComplaint, staffService, assignmentService);
+                    assignForm.setVisible(true);
+
+                    // Cập nhật lại bảng chính sau khi form đóng
+                    updateComplaintsTable();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not find complaint details.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        assignComplaintButton.setContentAreaFilled(false);
+    }//GEN-LAST:event_assignComplaintButtonActionPerformed
+
+    private void toggleMenuLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel3MouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_toggleMenuLabel3MouseClicked
+
+    private void updateAuthorizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateAuthorizationButtonActionPerformed
+        // TODO add your handling code here:
+        updateAuthorizationButton.setContentAreaFilled(true);
+        updateAuthorizationButton.setBackground(java.awt.Color.LIGHT_GRAY);
+
+        int selectedRow = listAuthorizationTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an account to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else {
+            // Lấy username từ dòng đã chọn
+            String username = listAuthorizationTable.getValueAt(selectedRow, 0).toString();
+            
+            // Tìm đối tượng Account đầy đủ từ service để đảm bảo dữ liệu chính xác
+            Account selectedAccount = authorizationService.getAllAccountsForAuthorization().stream()
+                .filter(acc -> acc.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+
+            if (selectedAccount != null) {
+                // Mở form cập nhật và truyền đối tượng Account
+                UpdateAuthorization updateForm = new UpdateAuthorization(this, true, selectedAccount, authorizationService);
+                updateForm.setVisible(true);
+
+                // Sau khi form đóng, làm mới lại bảng
+                updateAuthorizationTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not find account details for: " + username, "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
+        updateAuthorizationButton.setContentAreaFilled(false);
+    }//GEN-LAST:event_updateAuthorizationButtonActionPerformed
+
+    private void bookingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bookingButtonActionPerformed
+        // TODO add your handling code here:
+        showPanel(contentPanel, "booking");
+    }//GEN-LAST:event_bookingButtonActionPerformed
+
+    private void updateFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateFacilityButtonActionPerformed
+        // TODO add your handling code here:
+        updateFacilityButton.setBackground(Color.LIGHT_GRAY);
+        updateFacilityButton.setContentAreaFilled(true);
+
+        int selectedRow = listFacilityTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a facility to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else if (listFacilityTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one facility to update.", "Multiple Selections", JOptionPane.WARNING_MESSAGE);
+        } else {
+            try {
+                String facilityId = listFacilityTable.getValueAt(selectedRow, 0).toString();
+                Facility facilityToUpdate = facilityService.getAllFacilities().stream()
+                        .filter(f -> f.getServiceId().equals(facilityId))
+                        .findFirst()
+                        .orElse(null);
+
+                if (facilityToUpdate != null) {
+                    UpdateFacilityForm updateForm = new UpdateFacilityForm(this, true, facilityToUpdate, this.facilityService);
+                    updateForm.setVisible(true);
+                    updateFacilityTable();
+                } else {
+                     JOptionPane.showMessageDialog(this, "Could not find details for the selected facility.", "Data Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error retrieving facility data: " + e.getMessage(), "Data Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+        updateFacilityButton.setContentAreaFilled(false);
+    }//GEN-LAST:event_updateFacilityButtonActionPerformed
+
+    private void deleteFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFacilityButtonActionPerformed
+        // TODO add your handling code here:
+        deleteFacilityButton.setBackground(Color.LIGHT_GRAY);
+        deleteFacilityButton.setContentAreaFilled(true);
+
+        int[] selectedRows = listFacilityTable.getSelectedRows();
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Please select at least one facility to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete the selected facility(s)? This may affect existing invoices.",
+                    "Confirm Deletion",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean allSucceeded = true;
+                for (int i = selectedRows.length - 1; i >= 0; i--) {
+                    int modelRow = listFacilityTable.convertRowIndexToModel(selectedRows[i]);
+                    String facilityId = listFacilityTable.getModel().getValueAt(modelRow, 0).toString();
+                    if (!facilityService.deleteFacility(facilityId)) {
+                        allSucceeded = false;
+                    }
+                }
+                
+                updateFacilityTable();
+                
+                if (allSucceeded) {
+                    JOptionPane.showMessageDialog(this, "Facility(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Could not delete all selected facilities.", "Deletion Failed", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        deleteFacilityButton.setContentAreaFilled(false);
+    }//GEN-LAST:event_deleteFacilityButtonActionPerformed
+
+    private void toggleMenuLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel4MouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_toggleMenuLabel4MouseClicked
+
+    private void detailFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailFacilityButtonActionPerformed
+        // TODO add your handling code here:
+        detailFacilityButton.setBackground(Color.LIGHT_GRAY);
+        detailFacilityButton.setContentAreaFilled(true);
+
+        int selectedRow = listFacilityTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a facility to view details.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        } else if (listFacilityTable.getSelectedRowCount() > 1) {
+            JOptionPane.showMessageDialog(this, "Please select only one facility.", "Multiple Selections", JOptionPane.WARNING_MESSAGE);
+        } else {
+            String facilityId = listFacilityTable.getValueAt(selectedRow, 0).toString();
+            Facility facilityToShow = facilityService.getAllFacilities().stream()
+                    .filter(f -> f.getServiceId().equals(facilityId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (facilityToShow != null) {
+                DetailFacilityForm detailForm = new DetailFacilityForm(this, true, facilityToShow);
+                detailForm.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not find details for the selected facility.", "Data Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        detailFacilityButton.setContentAreaFilled(false);
+    }//GEN-LAST:event_detailFacilityButtonActionPerformed
+
+    private void addFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addFacilityButtonActionPerformed
+        // TODO add your handling code here:
+        addFacilityButton.setBackground(Color.LIGHT_GRAY);
+        addFacilityButton.setContentAreaFilled(true);
+        
+        AddFacilityForm addForm = new AddFacilityForm(this, true, this.facilityService);
+        addForm.setVisible(true);
+
+        addFacilityButton.setContentAreaFilled(false);
+        updateFacilityTable();
+    }//GEN-LAST:event_addFacilityButtonActionPerformed
+
+    private void updateInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateInvoiceButtonActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = listInvoiceTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn để cập nhật.", "Chưa chọn hóa đơn", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Lấy trạng thái từ cột thứ 4 (chỉ số 4) của bảng
+            String status = listInvoiceTable.getValueAt(selectedRow, 4).toString();
+
+            // Kiểm tra trạng thái của hóa đơn
+            if (!"Pending".equalsIgnoreCase(status)) {
+                JOptionPane.showMessageDialog(this, "Chỉ có thể cập nhật các hóa đơn có trạng thái 'Pending'.", "Không thể cập nhật", JOptionPane.INFORMATION_MESSAGE);
+                return; // Dừng lại nếu không phải là "Pending"
+            }
+
+            // Nếu trạng thái là "Pending", tiếp tục xử lý
+            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
+            Invoice invoiceToUpdate = invoiceService.getAllInvoices().stream()
+                    .filter(inv -> inv.getInvoiceId() == invoiceId)
+                    .findFirst().orElse(null);
+            
+            if (invoiceToUpdate != null) {
+                UpdateInvoiceForm updateForm = new UpdateInvoiceForm(this, true, invoiceToUpdate, invoiceService);
+                updateForm.setVisible(true);
+                updateInvoiceTable(); // Làm mới bảng sau khi form cập nhật đóng lại
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải chi tiết hóa đơn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_updateInvoiceButtonActionPerformed
+
+    private void deleteInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteInvoiceButtonActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = listInvoiceTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an invoice to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, 
+                "Are you sure you want to delete this invoice? This action cannot be undone.", 
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
+            if (invoiceService.deleteInvoice(invoiceId)) {
+                JOptionPane.showMessageDialog(this, "Invoice deleted successfully.");
+                updateInvoiceTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete invoice.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_deleteInvoiceButtonActionPerformed
+
+    private void toggleMenuLabel5MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel5MouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_toggleMenuLabel5MouseClicked
+
+    private void detailInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailInvoiceButtonActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = listInvoiceTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an invoice to view details.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        try {
+            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
+            Invoice invoiceToShow = invoiceService.getAllInvoices().stream()
+                    .filter(inv -> inv.getInvoiceId() == invoiceId)
+                    .findFirst().orElse(null);
+            
+            if (invoiceToShow != null) {
+                DetailInvoiceForm detailForm = new DetailInvoiceForm(this, true, invoiceToShow);
+                detailForm.setVisible(true);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading invoice details.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_detailInvoiceButtonActionPerformed
+
+    private void profileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_profileButtonActionPerformed
+        // TODO add your handling code here:
+        showPanel(contentPanel, "invoice");
+    }//GEN-LAST:event_profileButtonActionPerformed
     
     /**
      * @param args the command line arguments
@@ -1945,7 +3230,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                HomeAdminForm h = new HomeAdminForm();
+                HomeAdminForm h = new HomeAdminForm("CD001");
                 h.setExtendedState(JFrame.MAXIMIZED_BOTH); // Phóng to toàn màn hình
                 h.setLocationRelativeTo(null); 
                 h.setVisible(true);
@@ -1954,29 +3239,44 @@ public class HomeAdminForm extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton accountsButton;
+    private javax.swing.JButton addComplaintButton;
+    private javax.swing.JButton addFacilityButton;
     private javax.swing.JButton addParkingSlotButton;
     private javax.swing.JButton addServiceButton;
-    private View.ColorPanel.gradientMenu apartmentPanel;
+    private javax.swing.JButton assignComplaintButton;
+    private javax.swing.JButton authorizationButton;
+    private javax.swing.JPanel authorizationPanel;
+    private javax.swing.JPanel authorizationToolbar;
     private javax.swing.JButton bookFacilities;
+    private javax.swing.JButton bookingButton;
     private javax.swing.JPanel bookingFacilities;
     private javax.swing.JTextField cashReceived;
     private javax.swing.JTextField changeReturned;
+    private javax.swing.JPanel complaintPanel;
+    private javax.swing.JPanel complaintToolbar;
     private javax.swing.JButton complaintsButton;
     private javax.swing.JPanel contentPanel;
+    private javax.swing.JButton deleteComplaintButton;
+    private javax.swing.JButton deleteFacilityButton;
+    private javax.swing.JButton deleteInvoiceButton;
     private javax.swing.JButton deleteParkingSlotButton;
     private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteSubscribedFacilities;
-    private javax.swing.JTextField dienTich;
+    private javax.swing.JTextArea descriptionFacilities;
+    private javax.swing.JButton detailComplaintButton;
+    private javax.swing.JButton detailFacilityButton;
+    private javax.swing.JButton detailInvoiceButton;
     private javax.swing.JButton exportParkingSlotsButton;
     private javax.swing.JButton exportServiceButton;
+    private javax.swing.JPanel facilityPanel;
+    private javax.swing.JPanel facilityToolbar;
     private javax.swing.JButton homeButton;
     private javax.swing.JPanel homePanel;
     private javax.swing.JTextField invoiceID;
+    private javax.swing.JPanel invoicePanel;
+    private javax.swing.JPanel invoiceToolbar;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton9;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
@@ -2003,11 +3303,19 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel34;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
+    private javax.swing.JLabel jLabel39;
+    private javax.swing.JLabel jLabel40;
+    private javax.swing.JLabel jLabel41;
+    private javax.swing.JLabel jLabel42;
+    private javax.swing.JLabel jLabel43;
+    private javax.swing.JLabel jLabel44;
+    private javax.swing.JLabel jLabel46;
+    private javax.swing.JLabel jLabel47;
+    private javax.swing.JLabel jLabel48;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -2019,12 +3327,25 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField7;
+    private javax.swing.JPanel listAuthorizationPanel;
+    private javax.swing.JTable listAuthorizationTable;
+    private javax.swing.JLabel listComplaintLabel;
+    private javax.swing.JLabel listComplaintLabel1;
+    private javax.swing.JLabel listComplaintLabel2;
+    private javax.swing.JLabel listComplaintLabel3;
+    private javax.swing.JPanel listComplaintPanel;
+    private javax.swing.JScrollPane listComplaintScroll;
+    private javax.swing.JScrollPane listComplaintScroll1;
+    private javax.swing.JScrollPane listComplaintScroll2;
+    private javax.swing.JScrollPane listComplaintScroll3;
+    private javax.swing.JTable listComplaintTable;
     private javax.swing.JTable listFacilitiesSubscribiedTable;
     private javax.swing.JTable listFacilitiesTable;
+    private javax.swing.JPanel listFacilityPanel;
+    private javax.swing.JTable listFacilityTable;
+    private javax.swing.JPanel listInvoicePanel;
+    private javax.swing.JTable listInvoiceTable;
     private javax.swing.JLabel listParkingSlotLabel;
     private javax.swing.JPanel listParkingSlotPanel;
     private javax.swing.JPanel listParkingSlotPanel1;
@@ -2036,20 +3357,24 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JScrollPane listServiceScroll;
     private javax.swing.JTable listServiceTable;
     private javax.swing.JButton logOutButton;
-    private javax.swing.JTextField maCanHo;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JPanel mainParking;
     private javax.swing.JPanel menuPanel;
-    private javax.swing.JButton otherButton;
+    private javax.swing.JTextField nameResident;
     private javax.swing.JButton parkingManagementButton;
     private javax.swing.JPanel parkingToolbar;
     private javax.swing.JPanel parkingToolbar1;
+    private javax.swing.JTextField phoneNumber;
     private javax.swing.JTextField price;
     private javax.swing.JButton printInvoiceButton;
     private javax.swing.JButton profileButton;
     private javax.swing.JButton residentManagementButton;
     private javax.swing.JPanel residentPanel;
     private javax.swing.JScrollPane scrollPane;
+    private javax.swing.JTextField searchAuthorizationField;
+    private javax.swing.JTextField searchComplaintField;
+    private javax.swing.JTextField searchFacilityField;
+    private javax.swing.JTextField searchInvoiceField;
     private javax.swing.JTextField searchParkingSlotField;
     private javax.swing.JTextField searchServiceField;
     private javax.swing.JButton serviceFacilityButton;
@@ -2059,13 +3384,17 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JPanel serviceSub;
     private javax.swing.JPanel serviceToolbar;
     private javax.swing.JPanel slot;
-    private javax.swing.JTextField soDien;
-    private javax.swing.JTextField soNuoc;
-    private javax.swing.JButton themButton;
     private javax.swing.JLabel toggleMenuLabel;
     private javax.swing.JLabel toggleMenuLabel1;
+    private javax.swing.JLabel toggleMenuLabel2;
+    private javax.swing.JLabel toggleMenuLabel3;
+    private javax.swing.JLabel toggleMenuLabel4;
+    private javax.swing.JLabel toggleMenuLabel5;
     private javax.swing.JTextField totalBill;
-    private javax.swing.JTextField trangThai;
+    private javax.swing.JButton updateAuthorizationButton;
+    private javax.swing.JButton updateComplaintButton;
+    private javax.swing.JButton updateFacilityButton;
+    private javax.swing.JButton updateInvoiceButton;
     private javax.swing.JButton updateParkingSlotButton;
     private javax.swing.JButton updateServiceButton;
     // End of variables declaration//GEN-END:variables

@@ -4,25 +4,21 @@
  */
 package View;
 
-import Process.ButtonEffectLogin;
-import Process.Parking.Placeholder;
-import Process.User.RoleGroupConstant;
-import Process.User.UserJava;
-import Process.User.UserResponse;
+import Model.DTO.LoginResponse;
+import Service.AuthService;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Image;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import Process.ButtonEffectLogin; // Tạm giữ lại để không lỗi UI
+import Process.Placeholder; // Tạm giữ lại để không lỗi UI
+
 
 /**
  *
@@ -35,35 +31,27 @@ public class Login extends javax.swing.JFrame {
      */
     private boolean isPasswordVisibleSignIn = false;
     private boolean isPasswordVisibleSignUp = false;
+    private AuthService authService; // Service mới
+
     public Login() {
         initComponents();
+        this.authService = new AuthService(); // Khởi tạo service
+        
+        // Custom UI
         setLocationRelativeTo(null);
-        JLabel label = jLabel2; // label đã gán sẵn icon qua GUI builder
-             
-        // Lấy icon hiện tại
+        JLabel label = jLabel2;
         ImageIcon icon = new ImageIcon(getClass().getResource("/icon/apartment1.jpg"));
-
-        // Lấy kích thước label
-        int width = label.getWidth();
-        int height = label.getHeight();
-
-        // Resize icon
-        Image img = icon.getImage();
-        Image scaledImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-
-        // Gán lại icon đã scale
-        label.setIcon(new ImageIcon(scaledImg));
+        Image img = icon.getImage().getScaledInstance(label.getWidth(), label.getHeight(), Image.SCALE_SMOOTH);
+        label.setIcon(new ImageIcon(img));
         
-        
-        ButtonEffectLogin.applyGradient(signIn, Color.decode("#4568DC"), Color.decode("#B06AB3")); // Tím     
+        ButtonEffectLogin.applyGradient(signIn, Color.decode("#4568DC"), Color.decode("#B06AB3"));
         Placeholder.addPlaceholderToTextField(usernameField, "Username");
         Placeholder.addPlaceholderToPasswordField(passwordField, "Password");
         
-        ButtonEffectLogin.applyGradient(signUp, Color.decode("#8E0E00"), Color.decode("#1F1C18")); // Xanh ngọc
+        ButtonEffectLogin.applyGradient(signUp, Color.decode("#8E0E00"), Color.decode("#1F1C18"));
         Placeholder.addPlaceholderToTextField(usernameFieldSignUp, "Username");
         Placeholder.addPlaceholderToPasswordField(passwordFieldSignUp, "Password");
         Placeholder.addPlaceholderToTextField(emailFieldSignUp, "Email");
- 
     }
 
     /**
@@ -418,52 +406,43 @@ public class Login extends javax.swing.JFrame {
 
     private void signInActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signInActionPerformed
         // TODO add your handling code here:
-        String usernameText = usernameField.getText();
-        System.out.println("Username: " + usernameText);
-        String passwordText = passwordField.getText();
-        System.out.println("Password: " + passwordText);
-        String passwordHash = this.HashPassword(passwordText);
-        System.out.print("PasswordHash: " + passwordHash);
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
 
-        UserJava user = new UserJava();
-        UserResponse userResponse = new UserResponse();
-        boolean isSuccess = false;
-        String role= null;
-        //Lay ket qua tu CSDL
-        RoleGroupConstant r = new RoleGroupConstant();
-        try {
-            userResponse = user.DangNhapNguoiDung(usernameText, passwordHash);
-            isSuccess = userResponse.isStatus();
-            role = userResponse.getRole();
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        if (username.isEmpty() || password.isEmpty() || username.equals("Username")) {
+             JOptionPane.showMessageDialog(this, "Username and Password cannot be empty.", "Input Error", JOptionPane.ERROR_MESSAGE);
+             return;
         }
 
-        if (isSuccess == true) {
-            JOptionPane.showMessageDialog(this, "Sign in successful");
-            System.out.print(role);
-            if(role.equals(r.ADMIN)){
-                HomeAdminForm h = new HomeAdminForm();
-                h.setExtendedState(JFrame.MAXIMIZED_BOTH);  // Phóng to toàn màn hình
+        LoginResponse response = authService.login(username, password);
+
+        if (response != null) { // Đăng nhập thành công nếu response không phải là null
+            JOptionPane.showMessageDialog(this, "Sign in successful!");
+            
+            String role = response.getRole();
+            String residentId = response.getResidentId();
+
+            if ("admin".equalsIgnoreCase(role)) {
+                HomeAdminForm h = new HomeAdminForm(null);
+                h.setExtendedState(JFrame.MAXIMIZED_BOTH);
                 h.setVisible(true);
-                this.dispose(); //dong form dang nhap
-            }
-            else if(role.equals(r.CUDAN)){
-                HomeUserForm h = new HomeUserForm();
-                h.setVisible(true);
-                h.setLocationRelativeTo(null);
                 this.dispose();
+            } else if ("resident".equalsIgnoreCase(role)) {
+                if (residentId == null) {
+                    JOptionPane.showMessageDialog(this, "This resident account is not linked correctly.", "Login Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                // Bạn có thể thay HomeAdminForm bằng HomeUserForm khi đã có
+                HomeAdminForm h = new HomeAdminForm(residentId);
+                h.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                h.setVisible(true);
+                this.dispose();
+            } else {
+                 JOptionPane.showMessageDialog(this, "Unknown user role. Access denied.", "Login Error", JOptionPane.ERROR_MESSAGE);
             }
-
-            //            hide();
-        }
-        else{
-            JOptionPane optionPane = new JOptionPane("Dang nhap that bai!", JOptionPane.ERROR_MESSAGE);
-            JDialog dialog = optionPane.createDialog("Failure");
-            dialog.setAlwaysOnTop(true);
-            dialog.setVisible(true);
+        } else {
+            // Đăng nhập thất bại
+            JOptionPane.showMessageDialog(this, "Invalid username or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_signInActionPerformed
 
@@ -485,42 +464,35 @@ public class Login extends javax.swing.JFrame {
 
     private void signUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signUpActionPerformed
         // TODO add your handling code here:
-        String usernameText = usernameFieldSignUp.getText();
-        System.out.println("Username: " + usernameText);
-        String passwordText = passwordFieldSignUp.getText();
-        System.out.println("Password: " + passwordText);
-        String passwordHash = this.HashPassword(passwordText);
-        System.out.print("PasswordHash: " + passwordHash);
-        String emailText = emailFieldSignUp.getText();
-        System.out.println("Username: " + usernameText);
+        String username = usernameFieldSignUp.getText();
+        String password = new String(passwordFieldSignUp.getPassword());
+        String email = emailFieldSignUp.getText();
 
-        UserJava user = new UserJava();
-
-        //Lay ket qua tu CSDL
-        int countRecord = 0;
-        try {
-            countRecord = user.themUser(usernameText, passwordHash, emailText);
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        if (username.isEmpty() || password.isEmpty() || email.isEmpty() || 
+            username.equals("Username") || email.equals("Email")) {
+            JOptionPane.showMessageDialog(this, "All fields are required for sign up.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (!email.contains("@") || !email.contains(".")) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        if (countRecord > 0) {
-            JOptionPane.showMessageDialog(this, "Registration successful!");
-            //            hide();
-        }
-        else if(countRecord == -2000) {
-            JOptionPane optionPane = new JOptionPane("The account has already been registered!", JOptionPane.ERROR_MESSAGE);
-            JDialog dialog = optionPane.createDialog("Failure");
-            dialog.setAlwaysOnTop(true);
-            dialog.setVisible(true);
-        }
-        else {
-            JOptionPane optionPane = new JOptionPane("Registration failed!", JOptionPane.ERROR_MESSAGE);
-            JDialog dialog = optionPane.createDialog("Failure");
-            dialog.setAlwaysOnTop(true);
-            dialog.setVisible(true);
+        int result = authService.register(username, password, email);
+
+        switch (result) {
+            case 1:
+                JOptionPane.showMessageDialog(this, "Sign up successful! You can now sign in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                // Tự động chuyển về màn hình đăng nhập
+                showPanel(cardLayout, "signIn");
+                break;
+            case -1:
+                JOptionPane.showMessageDialog(this, "Username or Email already exists. Please choose another.", "Registration Failed", JOptionPane.ERROR_MESSAGE);
+                break;
+            default:
+                JOptionPane.showMessageDialog(this, "An unexpected error occurred during registration. Please try again.", "Registration Failed", JOptionPane.ERROR_MESSAGE);
+                break;
         }
     }//GEN-LAST:event_signUpActionPerformed
 

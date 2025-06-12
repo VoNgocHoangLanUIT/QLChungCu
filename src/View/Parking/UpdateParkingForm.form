@@ -50,7 +50,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel6" min="-2" pref="105" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="licensePlateField" max="32767" attributes="0"/>
+                          <Component id="descriptionField" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel5" min="-2" pref="105" max="-2" attributes="0"/>
@@ -60,17 +60,17 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel4" min="-2" pref="105" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="vehicleField" max="32767" attributes="0"/>
+                          <Component id="complaintByField" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel3" min="-2" pref="105" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="slotTypeField" max="32767" attributes="0"/>
+                          <Component id="complaintTitleField" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel2" min="-2" pref="105" max="-2" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Component id="slotNameField" min="-2" pref="422" max="-2" attributes="0"/>
+                          <Component id="complaintIDField" min="-2" pref="422" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace pref="9" max="32767" attributes="0"/>
@@ -90,18 +90,18 @@
                   <Component id="jLabel1" min="-2" pref="67" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="slotNameField" alignment="0" pref="46" max="32767" attributes="0"/>
+                      <Component id="complaintIDField" alignment="0" pref="46" max="32767" attributes="0"/>
                       <Component id="jLabel2" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="slotTypeField" alignment="0" pref="46" max="32767" attributes="0"/>
+                      <Component id="complaintTitleField" alignment="0" pref="46" max="32767" attributes="0"/>
                       <Component id="jLabel3" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jLabel4" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
-                      <Component id="vehicleField" alignment="0" max="32767" attributes="0"/>
+                      <Component id="complaintByField" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -111,7 +111,7 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jLabel6" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
-                      <Component id="licensePlateField" alignment="0" max="32767" attributes="0"/>
+                      <Component id="descriptionField" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -180,7 +180,7 @@
             <Property name="text" type="java.lang.String" value="License Plate"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="slotNameField">
+        <Component class="javax.swing.JTextField" name="complaintIDField">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="f0" green="f0" red="f0" type="rgb"/>
@@ -191,21 +191,21 @@
             <Property name="focusable" type="boolean" value="false"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="slotTypeField">
+        <Component class="javax.swing.JTextField" name="complaintTitleField">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI" size="14" style="0"/>
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="vehicleField">
+        <Component class="javax.swing.JTextField" name="complaintByField">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI" size="14" style="0"/>
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="licensePlateField">
+        <Component class="javax.swing.JTextField" name="descriptionField">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI" size="14" style="0"/>
