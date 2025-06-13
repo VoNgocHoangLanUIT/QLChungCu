@@ -16,7 +16,8 @@ public class InvoiceDAO {
 
     public List<Invoice> getAllInvoices() {
         List<Invoice> invoices = new ArrayList<>();
-        String sql = "SELECT * FROM HoaDon ORDER BY ma_hoa_don DESC";
+        // Sửa đổi câu lệnh SQL để chỉ lấy các hóa đơn chưa bị xóa (da_xoa = 0)
+        String sql = "SELECT * FROM HoaDon WHERE da_xoa = 0 ORDER BY ma_hoa_don DESC";
         try (Connection conn = ConnectionUtils.getMyConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -30,6 +31,7 @@ public class InvoiceDAO {
                 invoice.setCashReceived(rs.getDouble("tien_nhan"));
                 invoice.setStatus(rs.getString("trang_thai"));
                 invoice.setChangeReturned(rs.getDouble("tien_thua"));
+                invoice.setDeleted(rs.getInt("da_xoa") == 1);
                 invoices.add(invoice);
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -40,7 +42,8 @@ public class InvoiceDAO {
     
     public int addInvoice(String residentId, double totalFee, String status) {
         int newInvoiceId = -1;
-        String sql = "INSERT INTO HoaDon (tong_phi, ma_cu_dan, trang_thai) VALUES (?, ?, ?) RETURNING ma_hoa_don INTO ?";
+        // Cập nhật câu lệnh INSERT để bao gồm cột da_xoa (mặc định là 0)
+        String sql = "INSERT INTO HoaDon (tong_phi, ma_cu_dan, trang_thai, da_xoa) VALUES (?, ?, ?, 0) RETURNING ma_hoa_don INTO ?";
         String plsql = "BEGIN " + sql + "; END;";
 
         try (Connection con = ConnectionUtils.getMyConnection();
@@ -79,30 +82,16 @@ public class InvoiceDAO {
     }
 
     public boolean deleteInvoice(int invoiceId) {
-        String deleteDetailsSql = "DELETE FROM ChiTietSuDungDichVu WHERE ma_hoa_don = ?";
-        String deleteInvoiceSql = "DELETE FROM HoaDon WHERE ma_hoa_don = ?";
+        // Thay đổi từ DELETE sang UPDATE để thực hiện soft delete.
+        // Không xóa các chi tiết liên quan để bảo toàn dữ liệu.
+        String sql = "UPDATE HoaDon SET da_xoa = 1 WHERE ma_hoa_don = ?";
         
-        try (Connection con = ConnectionUtils.getMyConnection()) {
-            con.setAutoCommit(false); // Bắt đầu transaction
-
-            // Xóa chi tiết hóa đơn trước
-            try (PreparedStatement psDetails = con.prepareStatement(deleteDetailsSql)) {
-                psDetails.setInt(1, invoiceId);
-                psDetails.executeUpdate();
-            }
-
-            // Xóa hóa đơn chính
-            try (PreparedStatement psInvoice = con.prepareStatement(deleteInvoiceSql)) {
-                psInvoice.setInt(1, invoiceId);
-                int rowsAffected = psInvoice.executeUpdate();
-                if (rowsAffected > 0) {
-                    con.commit(); // Hoàn tất transaction
-                    return true;
-                } else {
-                    con.rollback(); // Hủy bỏ nếu không xóa được
-                    return false;
-                }
-            }
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, invoiceId);
+            return ps.executeUpdate() > 0;
+            
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             return false;

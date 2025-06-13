@@ -87,14 +87,14 @@ public class DetailFacilityForm extends javax.swing.JDialog {
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("DETAIL FACILITY");
+        jLabel1.setText("DETAIL EXTERNAL SERVICE");
         jLabel1.setOpaque(true);
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel2.setText("FacilityID");
+        jLabel2.setText("ServiceID");
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel3.setText("Facility Name");
+        jLabel3.setText("Service Name");
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel4.setText("Manufacturer");

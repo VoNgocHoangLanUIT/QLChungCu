@@ -10,7 +10,8 @@ public class FacilityDAO {
 
     public List<Facility> getAllFacilities() {
         List<Facility> facilities = new ArrayList<>();
-        String sql = "SELECT ma_dv_ngoai, ten_dv_ngoai, ma_nha_cung_cap, don_vi, so_luong, gia, mo_ta FROM DichVuNgoai"; 
+        // Sửa đổi câu lệnh SQL để chỉ lấy các dịch vụ chưa bị xóa (da_xoa = 0)
+        String sql = "SELECT ma_dv_ngoai, ten_dv_ngoai, ma_nha_cung_cap, don_vi, so_luong, gia, mo_ta, da_xoa FROM DichVuNgoai WHERE da_xoa = 0"; 
         
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -18,7 +19,6 @@ public class FacilityDAO {
 
             while (rs.next()) {
                 int stock = rs.getInt("so_luong");
-                // Nếu so_luong là NULL trong DB, hiển thị là "unlimited"
                 String stockQuantityStr = rs.wasNull() ? "unlimited" : String.valueOf(stock);
                 
                 Facility facility = new Facility(
@@ -30,6 +30,7 @@ public class FacilityDAO {
                     rs.getDouble("gia"),
                     rs.getString("mo_ta") 
                 );
+                facility.setDeleted(rs.getInt("da_xoa") == 1);
                 facilities.add(facility);
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -39,7 +40,8 @@ public class FacilityDAO {
     }
     
     public boolean addFacility(Facility facility) {
-        String sql = "INSERT INTO DichVuNgoai (ma_dv_ngoai, ten_dv_ngoai, ma_nha_cung_cap, don_vi, so_luong, gia, mo_ta) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // Cập nhật câu lệnh INSERT để bao gồm cột da_xoa (mặc định là 0)
+        String sql = "INSERT INTO DichVuNgoai (ma_dv_ngoai, ten_dv_ngoai, ma_nha_cung_cap, don_vi, so_luong, gia, mo_ta, da_xoa) VALUES (?, ?, ?, ?, ?, ?, ?, 0)";
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -91,7 +93,8 @@ public class FacilityDAO {
     }
 
     public boolean deleteFacility(String facilityId) {
-        String sql = "DELETE FROM DichVuNgoai WHERE ma_dv_ngoai = ?";
+        // Thay đổi từ DELETE sang UPDATE để thực hiện soft delete
+        String sql = "UPDATE DichVuNgoai SET da_xoa = 1 WHERE ma_dv_ngoai = ?";
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             

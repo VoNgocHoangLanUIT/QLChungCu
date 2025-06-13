@@ -73,12 +73,7 @@ public class UpdateInvoiceForm extends javax.swing.JDialog {
             DecimalFormat formatter = new DecimalFormat("#,##0");
             changeReturnedField.setText(formatter.format(change));
             
-            // Tự động cập nhật status
-            if (cashReceived > 0) {
-                statusComboBox.setSelectedItem("Completed");
-            } else {
-                 statusComboBox.setSelectedItem("Pending");
-            }
+           
             
         } catch (NumberFormatException e) {
             changeReturnedField.setText("0");

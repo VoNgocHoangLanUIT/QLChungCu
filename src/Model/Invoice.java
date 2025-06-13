@@ -8,8 +8,9 @@ public class Invoice {
     private double totalFee;
     private String residentId;
     private double cashReceived;
-    private String status; // Thêm thuộc tính trạng thái
+    private String status;
     private double changeReturned;
+    private boolean deleted; // Thuộc tính mới cho soft delete
 
     // Constructors
     public Invoice() {
@@ -70,5 +71,13 @@ public class Invoice {
 
     public void setChangeReturned(double changeReturned) {
         this.changeReturned = changeReturned;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }

@@ -123,8 +123,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
         };
 
         // Gán các button vào ButtonEffectGroup
-        JButton[] buttons = {homeButton, residentManagementButton, parkingManagementButton, 
-                            complaintsButton, serviceFacilityButton, bookingButton,
+        JButton[] buttons = {complaintButton, residentManagementButton, parkingManagementButton, 
+                            residentButton, serviceFacilityButton, bookingButton,
                             profileButton, authorizationButton, logOutButton};
 
         // Tạo ButtonEffectGroup và truyền vào các button và icon
@@ -215,6 +215,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
  //---------------------------------------------------------------------INVOICE--------------------------------------------- 
         new SetupTable(searchInvoiceField, listInvoiceTable);
         updateInvoiceTable(); // Tải dữ liệu cho bảng hóa đơn
+        // Tự động nhấn nút "Complaints" khi form được mở
+        complaintButton.doClick();
     }
 //--------------------------------------------ket thuc constructor-------------------------------------------------------  
     public void showPanel(JPanel panel,String name) {
@@ -286,16 +288,11 @@ public class HomeAdminForm extends javax.swing.JFrame {
         model.setRowCount(0); // Xóa dữ liệu cũ
 
         for (Facility facility : facilities) {
-            Object stockValue = (facility.getStockQuantity() == null || facility.getStockQuantity().trim().isEmpty())
-                                ? "unlimited"
-                                : facility.getStockQuantity();
-
             model.addRow(new Object[]{
                 facility.getServiceId(),
                 facility.getServiceName(),
                 facility.getManufacturer(),
                 facility.getUnit(),
-                stockValue,
                 facility.getPrice()
             });
         }
@@ -454,7 +451,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 facility.getServiceName(),
                 facility.getManufacturer(),
                 facility.getUnit(),
-                facility.getStockQuantity(),
                 facility.getPrice()
             });
         }
@@ -488,23 +484,15 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         mainPanel = new javax.swing.JPanel();
         contentPanel = new javax.swing.JPanel();
-        homePanel = new javax.swing.JPanel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        residentPanel = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
         mainParking = new javax.swing.JPanel();
         parkingToolbar = new javax.swing.JPanel();
         searchParkingSlotField = new javax.swing.JTextField();
         addParkingSlotButton = new javax.swing.JButton();
         updateParkingSlotButton = new javax.swing.JButton();
         deleteParkingSlotButton = new javax.swing.JButton();
-        exportParkingSlotsButton = new javax.swing.JButton();
         jLabel11 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
         toggleMenuLabel = new javax.swing.JLabel();
         listParkingSlotPanel = new javax.swing.JPanel();
         listParkingSlotScroll = new javax.swing.JScrollPane();
@@ -559,11 +547,9 @@ public class HomeAdminForm extends javax.swing.JFrame {
         addServiceButton = new javax.swing.JButton();
         updateServiceButton = new javax.swing.JButton();
         deleteServiceButton = new javax.swing.JButton();
-        exportServiceButton = new javax.swing.JButton();
         jLabel31 = new javax.swing.JLabel();
         jLabel32 = new javax.swing.JLabel();
         jLabel33 = new javax.swing.JLabel();
-        jLabel34 = new javax.swing.JLabel();
         toggleMenuLabel1 = new javax.swing.JLabel();
         listServicePanel = new javax.swing.JPanel();
         listServiceScroll = new javax.swing.JScrollPane();
@@ -635,8 +621,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
         serviceFacilityButton = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
         residentManagementButton = new javax.swing.JButton();
-        complaintsButton = new javax.swing.JButton();
-        homeButton = new javax.swing.JButton();
+        residentButton = new javax.swing.JButton();
+        complaintButton = new javax.swing.JButton();
         parkingManagementButton = new javax.swing.JButton();
         serviceSub = new javax.swing.JPanel();
         jButton9 = new javax.swing.JButton();
@@ -652,80 +638,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         contentPanel.setBackground(new java.awt.Color(255, 255, 255));
         contentPanel.setLayout(new java.awt.CardLayout());
-
-        homePanel.setBackground(new java.awt.Color(255, 255, 255));
-        homePanel.setForeground(new java.awt.Color(255, 255, 255));
-        homePanel.setPreferredSize(new java.awt.Dimension(1020, 800));
-
-        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
-        jLabel13.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel13MouseClicked(evt);
-            }
-        });
-
-        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/vt.jpg"))); // NOI18N
-        jLabel9.setPreferredSize(new java.awt.Dimension(1200, 800));
-
-        javax.swing.GroupLayout homePanelLayout = new javax.swing.GroupLayout(homePanel);
-        homePanel.setLayout(homePanelLayout);
-        homePanelLayout.setHorizontalGroup(
-            homePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(homePanelLayout.createSequentialGroup()
-                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 1008, Short.MAX_VALUE))
-            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-        );
-        homePanelLayout.setVerticalGroup(
-            homePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(homePanelLayout.createSequentialGroup()
-                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
-
-        contentPanel.add(homePanel, "home");
-
-        residentPanel.setBackground(new java.awt.Color(255, 255, 255));
-
-        jLabel3.setText("day la cu dan admin");
-
-        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
-        jLabel12.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel12MouseClicked(evt);
-            }
-        });
-
-        javax.swing.GroupLayout residentPanelLayout = new javax.swing.GroupLayout(residentPanel);
-        residentPanel.setLayout(residentPanelLayout);
-        residentPanelLayout.setHorizontalGroup(
-            residentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(residentPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(116, 116, 116)
-                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(677, Short.MAX_VALUE))
-        );
-        residentPanelLayout.setVerticalGroup(
-            residentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(residentPanelLayout.createSequentialGroup()
-                .addGroup(residentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(residentPanelLayout.createSequentialGroup()
-                        .addGap(55, 55, 55)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(residentPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(708, Short.MAX_VALUE))
-        );
-
-        contentPanel.add(residentPanel, "resident");
 
         mainParking.setBackground(new java.awt.Color(245, 245, 245));
 
@@ -764,11 +676,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
             }
         });
 
-        exportParkingSlotsButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        exportParkingSlotsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-export-pdf-48.png"))); // NOI18N
-        exportParkingSlotsButton.setContentAreaFilled(false);
-        exportParkingSlotsButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
         jLabel11.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel11.setText("ADD");
@@ -780,10 +687,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel15.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel15.setText("DELETE");
-
-        jLabel17.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("EXPORT");
 
         toggleMenuLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
@@ -811,11 +714,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel15)
                     .addComponent(deleteParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportParkingSlotsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel17))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 222, Short.MAX_VALUE)
                 .addComponent(searchParkingSlotField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         parkingToolbarLayout.setVerticalGroup(
@@ -823,7 +722,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
             .addGroup(parkingToolbarLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportParkingSlotsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateParkingSlotButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(addParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -832,8 +730,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addGroup(parkingToolbarLayout.createSequentialGroup()
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(parkingToolbarLayout.createSequentialGroup()
@@ -940,13 +837,13 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         listFacilitiesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"s1", "Gym", "Life Fitness", "Hour", "unlimited", "25000"},
-                {"s2", "Swimming Pool", "Pentair", "Person", "unlimited", "30000"},
-                {"s3", "Laundry", "LG Electronics	", "Kilogram", "500", "25000"},
-                {"s4", "Community Room", "Generic Provider	", "Hour", "50", "35000"}
+                {"s1", "Gym", "Life Fitness", "Hour", "25000"},
+                {"s2", "Swimming Pool", "Pentair", "Person", "30000"},
+                {"s3", "Laundry", "LG Electronics	", "Kilogram", "25000"},
+                {"s4", "Community Room", "Generic Provider	", "Hour", "35000"}
             },
             new String [] {
-                "ServiceID", "Service Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+                "ServiceID", "Service Name", "Manufacturer", "Unit", "Price"
             }
         ));
         listParkingSlotScroll1.setViewportView(listFacilitiesTable);
@@ -1347,11 +1244,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
             }
         });
 
-        exportServiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        exportServiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-export-pdf-48.png"))); // NOI18N
-        exportServiceButton.setContentAreaFilled(false);
-        exportServiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
         jLabel31.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel31.setText("ADD");
@@ -1363,10 +1255,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel33.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel33.setText("DELETE");
-
-        jLabel34.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel34.setText("EXPORT");
 
         toggleMenuLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
@@ -1394,11 +1282,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel33)
                     .addComponent(deleteServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel34))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 222, Short.MAX_VALUE)
                 .addComponent(searchServiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         serviceToolbarLayout.setVerticalGroup(
@@ -1406,7 +1290,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
             .addGroup(serviceToolbarLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateServiceButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(addServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1415,8 +1298,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel31, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel32, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel33, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel34, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jLabel33, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addGroup(serviceToolbarLayout.createSequentialGroup()
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(serviceToolbarLayout.createSequentialGroup()
@@ -1449,7 +1331,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         listServiceLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         listServiceLabel.setForeground(new java.awt.Color(255, 255, 255));
         listServiceLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        listServiceLabel.setText("\tLIST OF SERVICES");
+        listServiceLabel.setText("\tLIST OF INTERNAL SERVICES");
         listServiceLabel.setPreferredSize(new java.awt.Dimension(245, 40));
         listServicePanel.add(listServiceLabel, java.awt.BorderLayout.NORTH);
 
@@ -1582,7 +1464,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(assignComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel39, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 94, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 274, Short.MAX_VALUE)
                 .addComponent(searchComplaintField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         complaintToolbarLayout.setVerticalGroup(
@@ -1701,7 +1583,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(updateAuthorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel41))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 435, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 615, Short.MAX_VALUE)
                 .addComponent(searchAuthorizationField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         authorizationToolbarLayout.setVerticalGroup(
@@ -1858,7 +1740,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(detailFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 186, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 366, Short.MAX_VALUE)
                 .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         facilityToolbarLayout.setVerticalGroup(
@@ -1894,13 +1776,13 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         listFacilityTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"A101", "Staff", "Car", "Unavailable", null, "092849284"},
-                {"A102", "Resident", "Bike", "Unavailable", null, "76482794723"},
-                {"B202", "Staff", "Bike", "Unavailable", null, "93875927394"},
-                {"C101", "Staff", "Car", "Available", null, "N/A"}
+                {"A101", "Staff", "Car", "Unavailable", "092849284"},
+                {"A102", "Resident", "Bike", "Unavailable", "76482794723"},
+                {"B202", "Staff", "Bike", "Unavailable", "93875927394"},
+                {"C101", "Staff", "Car", "Available", "N/A"}
             },
             new String [] {
-                "FacilityID", "Facility Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+                "ServiceID", "Service Name", "Manufacturer", "Unit", "Price"
             }
         ));
         listComplaintScroll2.setViewportView(listFacilityTable);
@@ -1910,7 +1792,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         listComplaintLabel2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         listComplaintLabel2.setForeground(new java.awt.Color(255, 255, 255));
         listComplaintLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        listComplaintLabel2.setText("LIST OF FACILITIES");
+        listComplaintLabel2.setText("LIST OF EXTERNAL SERVICES");
         listComplaintLabel2.setPreferredSize(new java.awt.Dimension(245, 40));
         listFacilityPanel.add(listComplaintLabel2, java.awt.BorderLayout.NORTH);
 
@@ -2009,7 +1891,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(detailInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel48))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 263, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 443, Short.MAX_VALUE)
                 .addComponent(searchInvoiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         invoiceToolbarLayout.setVerticalGroup(
@@ -2129,7 +2011,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         jLabel18.setText("Admin");
 
         residentManagementButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        residentManagementButton.setText("Resident Management");
+        residentManagementButton.setText("Staff Management");
         residentManagementButton.setContentAreaFilled(false);
         residentManagementButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2137,21 +2019,21 @@ public class HomeAdminForm extends javax.swing.JFrame {
             }
         });
 
-        complaintsButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        complaintsButton.setText("Complaints");
-        complaintsButton.setContentAreaFilled(false);
-        complaintsButton.addActionListener(new java.awt.event.ActionListener() {
+        residentButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        residentButton.setText("Resident Management");
+        residentButton.setContentAreaFilled(false);
+        residentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                complaintsButtonActionPerformed(evt);
+                residentButtonActionPerformed(evt);
             }
         });
 
-        homeButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        homeButton.setText("Home");
-        homeButton.setContentAreaFilled(false);
-        homeButton.addActionListener(new java.awt.event.ActionListener() {
+        complaintButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        complaintButton.setText("Complaints");
+        complaintButton.setContentAreaFilled(false);
+        complaintButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                homeButtonActionPerformed(evt);
+                complaintButtonActionPerformed(evt);
             }
         });
 
@@ -2168,7 +2050,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         serviceSub.setLayout(new javax.swing.BoxLayout(serviceSub, javax.swing.BoxLayout.Y_AXIS));
 
         jButton9.setFont(new java.awt.Font("Sans Serif Collection", 1, 15)); // NOI18N
-        jButton9.setText("services");
+        jButton9.setText("Internal Service");
         jButton9.setContentAreaFilled(false);
         jButton9.setMaximumSize(new java.awt.Dimension(242, 55));
         jButton9.setPreferredSize(new java.awt.Dimension(242, 55));
@@ -2180,7 +2062,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         serviceSub.add(jButton9);
 
         jButton10.setFont(new java.awt.Font("Sans Serif Collection", 1, 15)); // NOI18N
-        jButton10.setText("facility");
+        jButton10.setText("External Service");
         jButton10.setContentAreaFilled(false);
         jButton10.setMaximumSize(new java.awt.Dimension(242, 55));
         jButton10.setPreferredSize(new java.awt.Dimension(242, 55));
@@ -2208,16 +2090,16 @@ public class HomeAdminForm extends javax.swing.JFrame {
         menuPanel.setLayout(menuPanelLayout);
         menuPanelLayout.setHorizontalGroup(
             menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(complaintsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(residentButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(profileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(authorizationButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(bookingButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(serviceSub, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(serviceFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+            .addComponent(serviceFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(residentManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(homeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(complaintButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(logOutButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, menuPanelLayout.createSequentialGroup()
                 .addContainerGap()
@@ -2233,13 +2115,13 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(3, 3, 3)
-                .addComponent(homeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(complaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(residentManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(complaintsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(residentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(serviceFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -2274,16 +2156,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jLabel12MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MouseClicked
-        // TODO add your handling code here:
-        s.toggleMenu();
-    }//GEN-LAST:event_jLabel12MouseClicked
-
-    private void jLabel13MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel13MouseClicked
-        // TODO add your handling code here:
-        s.toggleMenu();
-    }//GEN-LAST:event_jLabel13MouseClicked
 
     private void addParkingSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addParkingSlotButtonActionPerformed
         // TODO add your handling code here:
@@ -2466,30 +2338,32 @@ public class HomeAdminForm extends javax.swing.JFrame {
         // TODO add your handling code here:
         int selectedRow = listFacilitiesSubscribiedTable.getSelectedRow();
         if (selectedRow == -1 || invoiceID.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dịch vụ trong hóa đơn để xóa.", "Chưa chọn dịch vụ", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a service from the invoice to delete.", "No Service Selected", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc muốn xóa dịch vụ đã chọn này?",
-                "Xác nhận xóa",
+                "Are you sure you want to delete the selected service?",
+                "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             int currentInvoiceId = Integer.parseInt(invoiceID.getText());
-            List<SubscribedFacility> currentCart = subscribedFacilityService.getByInvoiceId(currentInvoiceId);
-            SubscribedFacility itemToRemove = currentCart.get(selectedRow);
+            // Lấy ServiceID trực tiếp từ cột đầu tiên của hàng đã chọn
+            String serviceIdToRemove = listFacilitiesSubscribiedTable.getValueAt(selectedRow, 0).toString();
 
-            boolean success = subscribedFacilityService.deleteFacilityFromInvoice(itemToRemove.getInvoiceId(), itemToRemove.getServiceId());
+            // Gọi phương thức xóa với ID hóa đơn và ID dịch vụ chính xác
+            boolean success = subscribedFacilityService.deleteFacilityFromInvoice(currentInvoiceId, serviceIdToRemove);
 
             if (success) {
                 updateSubscribedFacilitiesTable();
                 handleInvoiceUpdate();
-                JOptionPane.showMessageDialog(this, "Đã xóa dịch vụ thành công!");
+                JOptionPane.showMessageDialog(this, "Service deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi: Xóa dịch vụ thất bại.", "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error: Failed to delete the service.", "Database Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+
     }//GEN-LAST:event_deleteSubscribedFacilitiesActionPerformed
 
     private void logOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logOutButtonActionPerformed
@@ -2522,10 +2396,10 @@ public class HomeAdminForm extends javax.swing.JFrame {
         showPanel(contentPanel, "parking");
     }//GEN-LAST:event_parkingManagementButtonActionPerformed
 
-    private void homeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_homeButtonActionPerformed
+    private void complaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_complaintButtonActionPerformed
         // TODO add your handling code here:
-        showPanel(contentPanel, "home");
-    }//GEN-LAST:event_homeButtonActionPerformed
+        showPanel(contentPanel, "complaint");
+    }//GEN-LAST:event_complaintButtonActionPerformed
 
     private void residentManagementButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_residentManagementButtonActionPerformed
         // TODO add your handling code here:
@@ -2878,10 +2752,9 @@ public class HomeAdminForm extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_toggleMenuLabel2MouseClicked
 
-    private void complaintsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_complaintsButtonActionPerformed
+    private void residentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_residentButtonActionPerformed
         // TODO add your handling code here:
-        showPanel(contentPanel, "complaint");
-    }//GEN-LAST:event_complaintsButtonActionPerformed
+    }//GEN-LAST:event_residentButtonActionPerformed
 
     private void detailComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailComplaintButtonActionPerformed
         // TODO add your handling code here:
@@ -3055,6 +2928,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
                 }
                 
                 updateFacilityTable();
+                updateTableFacilities();
                 
                 if (allSucceeded) {
                     JOptionPane.showMessageDialog(this, "Facility(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -3113,56 +2987,81 @@ public class HomeAdminForm extends javax.swing.JFrame {
         // TODO add your handling code here:
         int selectedRow = listInvoiceTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn để cập nhật.", "Chưa chọn hóa đơn", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select an invoice to update.", "No Invoice Selected", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try {
-            // Lấy trạng thái từ cột thứ 4 (chỉ số 4) của bảng
+            // Get status from column index 4
             String status = listInvoiceTable.getValueAt(selectedRow, 4).toString();
 
-            // Kiểm tra trạng thái của hóa đơn
+            // Check invoice status
             if (!"Pending".equalsIgnoreCase(status)) {
-                JOptionPane.showMessageDialog(this, "Chỉ có thể cập nhật các hóa đơn có trạng thái 'Pending'.", "Không thể cập nhật", JOptionPane.INFORMATION_MESSAGE);
-                return; // Dừng lại nếu không phải là "Pending"
+                JOptionPane.showMessageDialog(this, "Only invoices with status 'Pending' can be updated.", "Cannot Update", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
 
-            // Nếu trạng thái là "Pending", tiếp tục xử lý
+            // Continue if status is "Pending"
             int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
             Invoice invoiceToUpdate = invoiceService.getAllInvoices().stream()
                     .filter(inv -> inv.getInvoiceId() == invoiceId)
                     .findFirst().orElse(null);
-            
+
             if (invoiceToUpdate != null) {
                 UpdateInvoiceForm updateForm = new UpdateInvoiceForm(this, true, invoiceToUpdate, invoiceService);
                 updateForm.setVisible(true);
-                updateInvoiceTable(); // Làm mới bảng sau khi form cập nhật đóng lại
+                updateInvoiceTable(); // Refresh table after closing update form
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải chi tiết hóa đơn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error loading invoice details.", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
+
     }//GEN-LAST:event_updateInvoiceButtonActionPerformed
 
     private void deleteInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteInvoiceButtonActionPerformed
         // TODO add your handling code here:
-        int selectedRow = listInvoiceTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an invoice to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        // Lấy tất cả các hàng đang được chọn trong bảng hóa đơn
+        int[] selectedRows = listInvoiceTable.getSelectedRows();
+
+        // Kiểm tra xem người dùng đã chọn hàng nào chưa
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Please select at least one invoice to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        // Hiển thị hộp thoại xác nhận với số lượng hóa đơn sẽ bị xóa
         int confirm = JOptionPane.showConfirmDialog(this, 
-                "Are you sure you want to delete this invoice? This action cannot be undone.", 
+                "Are you sure you want to delete the " + selectedRows.length + " selected invoice(s)? This action cannot be undone.", 
                 "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         
+        // Nếu người dùng đồng ý xóa
         if (confirm == JOptionPane.YES_OPTION) {
-            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
-            if (invoiceService.deleteInvoice(invoiceId)) {
-                JOptionPane.showMessageDialog(this, "Invoice deleted successfully.");
-                updateInvoiceTable();
+            boolean allSucceeded = true;
+            java.util.List<Integer> invoiceIdsToDelete = new java.util.ArrayList<>();
+
+            // Thu thập ID của tất cả các hóa đơn cần xóa vào một danh sách
+            for (int row : selectedRows) {
+                // Lấy ID hóa đơn từ cột đầu tiên của hàng đã chọn
+                int invoiceId = (int) listInvoiceTable.getValueAt(row, 0);
+                invoiceIdsToDelete.add(invoiceId);
+            }
+            
+            // Thực hiện xóa cho từng hóa đơn trong danh sách
+            for (int invoiceId : invoiceIdsToDelete) {
+                if (!invoiceService.deleteInvoice(invoiceId)) {
+                    allSucceeded = false; // Đánh dấu nếu có bất kỳ thao tác xóa nào thất bại
+                }
+            }
+
+            // Cập nhật lại bảng sau khi xóa xong
+            updateInvoiceTable();
+
+            // Hiển thị thông báo kết quả
+            if (allSucceeded) {
+                JOptionPane.showMessageDialog(this, "Selected invoice(s) deleted successfully.");
             } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete invoice.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Failed to delete one or more selected invoices.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_deleteInvoiceButtonActionPerformed
@@ -3230,7 +3129,7 @@ public class HomeAdminForm extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                HomeAdminForm h = new HomeAdminForm("CD001");
+                HomeAdminForm h = new HomeAdminForm("CD006");
                 h.setExtendedState(JFrame.MAXIMIZED_BOTH); // Phóng to toàn màn hình
                 h.setLocationRelativeTo(null); 
                 h.setVisible(true);
@@ -3252,9 +3151,9 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JPanel bookingFacilities;
     private javax.swing.JTextField cashReceived;
     private javax.swing.JTextField changeReturned;
+    private javax.swing.JButton complaintButton;
     private javax.swing.JPanel complaintPanel;
     private javax.swing.JPanel complaintToolbar;
-    private javax.swing.JButton complaintsButton;
     private javax.swing.JPanel contentPanel;
     private javax.swing.JButton deleteComplaintButton;
     private javax.swing.JButton deleteFacilityButton;
@@ -3266,24 +3165,17 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JButton detailComplaintButton;
     private javax.swing.JButton detailFacilityButton;
     private javax.swing.JButton detailInvoiceButton;
-    private javax.swing.JButton exportParkingSlotsButton;
-    private javax.swing.JButton exportServiceButton;
     private javax.swing.JPanel facilityPanel;
     private javax.swing.JPanel facilityToolbar;
-    private javax.swing.JButton homeButton;
-    private javax.swing.JPanel homePanel;
     private javax.swing.JTextField invoiceID;
     private javax.swing.JPanel invoicePanel;
     private javax.swing.JPanel invoiceToolbar;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton9;
     private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
@@ -3297,12 +3189,10 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel29;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel33;
-    private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
     private javax.swing.JLabel jLabel37;
@@ -3316,7 +3206,6 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel46;
     private javax.swing.JLabel jLabel47;
     private javax.swing.JLabel jLabel48;
-    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -3368,8 +3257,8 @@ public class HomeAdminForm extends javax.swing.JFrame {
     private javax.swing.JTextField price;
     private javax.swing.JButton printInvoiceButton;
     private javax.swing.JButton profileButton;
+    private javax.swing.JButton residentButton;
     private javax.swing.JButton residentManagementButton;
-    private javax.swing.JPanel residentPanel;
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JTextField searchAuthorizationField;
     private javax.swing.JTextField searchComplaintField;

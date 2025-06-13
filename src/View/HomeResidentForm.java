@@ -38,6 +38,8 @@ import View.Complaint.UpdateComplaintForm;
 import View.Facility.AddFacilityForm;
 import View.Facility.DetailFacilityForm;
 import View.Facility.UpdateFacilityForm;
+import View.Invoice.DetailInvoiceForm;
+import View.Invoice.UpdateInvoiceForm;
 import View.Complaint.AssignComplaintForm;
 import View.Authorization.UpdateAuthorization;
 
@@ -109,21 +111,17 @@ public class HomeResidentForm extends javax.swing.JFrame {
         
 //----------------------------------------MENU--------------------------------------------
         String[] iconPaths = {
-            "/icon/icon1.png",  // Icon cho Button 1
-            "/icon/icon2.png",  // Icon cho Button 2
             "/icon/icon3.png", 
             "/icon/icon4.png", 
             "/icon/icon5.png", 
-            "/icon/icon6.png", 
-            "/icon/icon7.png", 
-            "/icon/icon8.png", 
+            "/icon/icon6.png",  
             "/icon/icon9.png", 
         };
 
         // Gán các button vào ButtonEffectGroup
-        JButton[] buttons = {homeButton, residentManagementButton, parkingManagementButton, 
+        JButton[] buttons = {parkingManagementButton, 
                             complaintsButton, serviceFacilityButton, bookingButton,
-                            profileButton, authorizationButton, logOutButton};
+                             logOutButton};
 
         // Tạo ButtonEffectGroup và truyền vào các button và icon
         group = new ButtonEffectGroup(buttons, iconPaths, serviceSub, serviceFacilityButton, menuPanel, logOutButton);
@@ -210,7 +208,9 @@ public class HomeResidentForm extends javax.swing.JFrame {
  //---------------------------------------------------------------------FACILITY--------------------------------------------- 
         new SetupTable(searchFacilityField, listFacilityTable);
         updateFacilityTable();
-        
+ //---------------------------------------------------------------------INVOICE--------------------------------------------- 
+        new SetupTable(searchInvoiceField, listInvoiceTable);
+        updateInvoiceTable(); // Tải dữ liệu cho bảng hóa đơn
     }
 //--------------------------------------------ket thuc constructor-------------------------------------------------------  
     public void showPanel(JPanel panel,String name) {
@@ -282,16 +282,11 @@ public class HomeResidentForm extends javax.swing.JFrame {
         model.setRowCount(0); // Xóa dữ liệu cũ
 
         for (Facility facility : facilities) {
-            Object stockValue = (facility.getStockQuantity() == null || facility.getStockQuantity().trim().isEmpty())
-                                ? "unlimited"
-                                : facility.getStockQuantity();
-
             model.addRow(new Object[]{
                 facility.getServiceId(),
                 facility.getServiceName(),
                 facility.getManufacturer(),
                 facility.getUnit(),
-                stockValue,
                 facility.getPrice()
             });
         }
@@ -450,8 +445,25 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 facility.getServiceName(),
                 facility.getManufacturer(),
                 facility.getUnit(),
-                facility.getStockQuantity(),
                 facility.getPrice()
+            });
+        }
+    }
+//--------------------------------------------------------------------------------INVOICE------------------------------------------------------
+    public void updateInvoiceTable() {
+        List<Invoice> invoices = invoiceService.getAllInvoices();
+        DefaultTableModel model = (DefaultTableModel) listInvoiceTable.getModel();
+        model.setRowCount(0); // Xóa dữ liệu cũ
+        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
+        for (Invoice invoice : invoices) {
+            model.addRow(new Object[]{
+                invoice.getInvoiceId(),
+                invoice.getResidentId(),
+                dateFormat.format(invoice.getCreationDate()),
+                invoice.getTotalFee(),
+                invoice.getStatus()
             });
         }
     }
@@ -475,14 +487,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         mainParking = new javax.swing.JPanel();
         parkingToolbar = new javax.swing.JPanel();
         searchParkingSlotField = new javax.swing.JTextField();
-        addParkingSlotButton = new javax.swing.JButton();
-        updateParkingSlotButton = new javax.swing.JButton();
-        deleteParkingSlotButton = new javax.swing.JButton();
-        exportParkingSlotsButton = new javax.swing.JButton();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
         toggleMenuLabel = new javax.swing.JLabel();
         listParkingSlotPanel = new javax.swing.JPanel();
         listParkingSlotScroll = new javax.swing.JScrollPane();
@@ -534,14 +538,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         servicePanel = new javax.swing.JPanel();
         serviceToolbar = new javax.swing.JPanel();
         searchServiceField = new javax.swing.JTextField();
-        addServiceButton = new javax.swing.JButton();
-        updateServiceButton = new javax.swing.JButton();
-        deleteServiceButton = new javax.swing.JButton();
-        exportServiceButton = new javax.swing.JButton();
-        jLabel31 = new javax.swing.JLabel();
-        jLabel32 = new javax.swing.JLabel();
-        jLabel33 = new javax.swing.JLabel();
-        jLabel34 = new javax.swing.JLabel();
         toggleMenuLabel1 = new javax.swing.JLabel();
         listServicePanel = new javax.swing.JPanel();
         listServiceScroll = new javax.swing.JScrollPane();
@@ -551,16 +547,10 @@ public class HomeResidentForm extends javax.swing.JFrame {
         complaintToolbar = new javax.swing.JPanel();
         searchComplaintField = new javax.swing.JTextField();
         addComplaintButton = new javax.swing.JButton();
-        updateComplaintButton = new javax.swing.JButton();
-        deleteComplaintButton = new javax.swing.JButton();
         jLabel35 = new javax.swing.JLabel();
-        jLabel36 = new javax.swing.JLabel();
-        jLabel37 = new javax.swing.JLabel();
         toggleMenuLabel2 = new javax.swing.JLabel();
         detailComplaintButton = new javax.swing.JButton();
-        assignComplaintButton = new javax.swing.JButton();
         jLabel38 = new javax.swing.JLabel();
-        jLabel39 = new javax.swing.JLabel();
         listComplaintPanel = new javax.swing.JPanel();
         listComplaintScroll = new javax.swing.JScrollPane();
         listComplaintTable = new javax.swing.JTable();
@@ -578,12 +568,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         facilityPanel = new javax.swing.JPanel();
         facilityToolbar = new javax.swing.JPanel();
         searchFacilityField = new javax.swing.JTextField();
-        addFacilityButton = new javax.swing.JButton();
-        updateFacilityButton = new javax.swing.JButton();
-        deleteFacilityButton = new javax.swing.JButton();
-        jLabel40 = new javax.swing.JLabel();
-        jLabel42 = new javax.swing.JLabel();
-        jLabel43 = new javax.swing.JLabel();
         toggleMenuLabel4 = new javax.swing.JLabel();
         detailFacilityButton = new javax.swing.JButton();
         jLabel44 = new javax.swing.JLabel();
@@ -608,13 +592,9 @@ public class HomeResidentForm extends javax.swing.JFrame {
         scrollPane = new javax.swing.JScrollPane();
         menuPanel = new javax.swing.JPanel();
         bookingButton = new javax.swing.JButton();
-        profileButton = new javax.swing.JButton();
-        authorizationButton = new javax.swing.JButton();
         serviceFacilityButton = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
-        residentManagementButton = new javax.swing.JButton();
         complaintsButton = new javax.swing.JButton();
-        homeButton = new javax.swing.JButton();
         parkingManagementButton = new javax.swing.JButton();
         serviceSub = new javax.swing.JPanel();
         jButton9 = new javax.swing.JButton();
@@ -653,7 +633,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
             homePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(homePanelLayout.createSequentialGroup()
                 .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 1008, Short.MAX_VALUE))
+                .addGap(0, 1188, Short.MAX_VALUE))
             .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         homePanelLayout.setVerticalGroup(
@@ -688,7 +668,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(116, 116, 116)
                 .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(677, Short.MAX_VALUE))
+                .addContainerGap(857, Short.MAX_VALUE))
         );
         residentPanelLayout.setVerticalGroup(
             residentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -712,57 +692,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         searchParkingSlotField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         searchParkingSlotField.setText("Search...");
 
-        addParkingSlotButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        addParkingSlotButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/61658_add_green_plus_icon.png"))); // NOI18N
-        addParkingSlotButton.setContentAreaFilled(false);
-        addParkingSlotButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        addParkingSlotButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addParkingSlotButtonActionPerformed(evt);
-            }
-        });
-
-        updateParkingSlotButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        updateParkingSlotButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
-        updateParkingSlotButton.setContentAreaFilled(false);
-        updateParkingSlotButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        updateParkingSlotButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateParkingSlotButtonActionPerformed(evt);
-            }
-        });
-
-        deleteParkingSlotButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        deleteParkingSlotButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
-        deleteParkingSlotButton.setContentAreaFilled(false);
-        deleteParkingSlotButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteParkingSlotButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteParkingSlotButtonActionPerformed(evt);
-            }
-        });
-
-        exportParkingSlotsButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        exportParkingSlotsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-export-pdf-48.png"))); // NOI18N
-        exportParkingSlotsButton.setContentAreaFilled(false);
-        exportParkingSlotsButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
-        jLabel11.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel11.setText("ADD");
-
-        jLabel14.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel14.setText("UPDATE");
-
-        jLabel15.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel15.setText("DELETE");
-
-        jLabel17.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("EXPORT");
-
         toggleMenuLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
         toggleMenuLabel.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -777,41 +706,11 @@ public class HomeResidentForm extends javax.swing.JFrame {
             parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(parkingToolbarLayout.createSequentialGroup()
                 .addComponent(toggleMenuLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(addParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel14)
-                    .addComponent(updateParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel15)
-                    .addComponent(deleteParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportParkingSlotsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel17))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 481, Short.MAX_VALUE)
                 .addComponent(searchParkingSlotField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         parkingToolbarLayout.setVerticalGroup(
             parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(parkingToolbarLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportParkingSlotsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateParkingSlotButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(addParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(deleteParkingSlotButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(5, 5, 5)
-                .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addGroup(parkingToolbarLayout.createSequentialGroup()
                 .addGroup(parkingToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(parkingToolbarLayout.createSequentialGroup()
@@ -820,7 +719,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                     .addGroup(parkingToolbarLayout.createSequentialGroup()
                         .addGap(14, 14, 14)
                         .addComponent(toggleMenuLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         listParkingSlotPanel.setBackground(new java.awt.Color(0, 153, 153));
@@ -918,13 +817,13 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
         listFacilitiesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"s1", "Gym", "Life Fitness", "Hour", "unlimited", "25000"},
-                {"s2", "Swimming Pool", "Pentair", "Person", "unlimited", "30000"},
-                {"s3", "Laundry", "LG Electronics	", "Kilogram", "500", "25000"},
-                {"s4", "Community Room", "Generic Provider	", "Hour", "50", "35000"}
+                {"s1", "Gym", "Life Fitness", "Hour", "25000"},
+                {"s2", "Swimming Pool", "Pentair", "Person", "30000"},
+                {"s3", "Laundry", "LG Electronics	", "Kilogram", "25000"},
+                {"s4", "Community Room", "Generic Provider	", "Hour", "35000"}
             },
             new String [] {
-                "ServiceID", "Service Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+                "ServiceID", "Service Name", "Manufacturer", "Unit", "Price"
             }
         ));
         listParkingSlotScroll1.setViewportView(listFacilitiesTable);
@@ -1119,8 +1018,10 @@ public class HomeResidentForm extends javax.swing.JFrame {
         totalBill.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
         totalBill.setFocusable(false);
 
+        cashReceived.setBackground(new java.awt.Color(240, 240, 240));
         cashReceived.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
         cashReceived.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.lightGray, 2));
+        cashReceived.setFocusable(false);
 
         changeReturned.setBackground(new java.awt.Color(240, 240, 240));
         changeReturned.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
@@ -1295,57 +1196,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         searchServiceField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         searchServiceField.setText("Search...");
 
-        addServiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        addServiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/61658_add_green_plus_icon.png"))); // NOI18N
-        addServiceButton.setContentAreaFilled(false);
-        addServiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        addServiceButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addServiceButtonActionPerformed(evt);
-            }
-        });
-
-        updateServiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        updateServiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
-        updateServiceButton.setContentAreaFilled(false);
-        updateServiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        updateServiceButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateServiceButtonActionPerformed(evt);
-            }
-        });
-
-        deleteServiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        deleteServiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
-        deleteServiceButton.setContentAreaFilled(false);
-        deleteServiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteServiceButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteServiceButtonActionPerformed(evt);
-            }
-        });
-
-        exportServiceButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        exportServiceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-export-pdf-48.png"))); // NOI18N
-        exportServiceButton.setContentAreaFilled(false);
-        exportServiceButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
-        jLabel31.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel31.setText("ADD");
-
-        jLabel32.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel32.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel32.setText("UPDATE");
-
-        jLabel33.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel33.setText("DELETE");
-
-        jLabel34.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel34.setText("EXPORT");
-
         toggleMenuLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
         toggleMenuLabel1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1360,41 +1210,11 @@ public class HomeResidentForm extends javax.swing.JFrame {
             serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(serviceToolbarLayout.createSequentialGroup()
                 .addComponent(toggleMenuLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(addServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel31, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel32)
-                    .addComponent(updateServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel33)
-                    .addComponent(deleteServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel34))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 179, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 481, Short.MAX_VALUE)
                 .addComponent(searchServiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         serviceToolbarLayout.setVerticalGroup(
             serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(serviceToolbarLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(exportServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateServiceButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(addServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(deleteServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(5, 5, 5)
-                .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel31, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel32, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel33, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel34, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addGroup(serviceToolbarLayout.createSequentialGroup()
                 .addGroup(serviceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(serviceToolbarLayout.createSequentialGroup()
@@ -1403,7 +1223,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                     .addGroup(serviceToolbarLayout.createSequentialGroup()
                         .addGap(14, 14, 14)
                         .addComponent(toggleMenuLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         listServicePanel.setBackground(new java.awt.Color(0, 153, 153));
@@ -1427,7 +1247,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         listServiceLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         listServiceLabel.setForeground(new java.awt.Color(255, 255, 255));
         listServiceLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        listServiceLabel.setText("\tLIST OF SERVICES");
+        listServiceLabel.setText("\tLIST OF INTERNAL SERVICES");
         listServiceLabel.setPreferredSize(new java.awt.Dimension(245, 40));
         listServicePanel.add(listServiceLabel, java.awt.BorderLayout.NORTH);
 
@@ -1466,37 +1286,9 @@ public class HomeResidentForm extends javax.swing.JFrame {
             }
         });
 
-        updateComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        updateComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
-        updateComplaintButton.setContentAreaFilled(false);
-        updateComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        updateComplaintButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateComplaintButtonActionPerformed(evt);
-            }
-        });
-
-        deleteComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        deleteComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
-        deleteComplaintButton.setContentAreaFilled(false);
-        deleteComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteComplaintButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteComplaintButtonActionPerformed(evt);
-            }
-        });
-
         jLabel35.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel35.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel35.setText("ADD");
-
-        jLabel36.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel36.setText("UPDATE");
-
-        jLabel37.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel37.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel37.setText("DELETE");
 
         toggleMenuLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
@@ -1516,23 +1308,9 @@ public class HomeResidentForm extends javax.swing.JFrame {
             }
         });
 
-        assignComplaintButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        assignComplaintButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delegate-48 (1).png"))); // NOI18N
-        assignComplaintButton.setContentAreaFilled(false);
-        assignComplaintButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        assignComplaintButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                assignComplaintButtonActionPerformed(evt);
-            }
-        });
-
         jLabel38.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel38.setText("DETAIL");
-
-        jLabel39.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel39.setText("ASSIGN");
 
         javax.swing.GroupLayout complaintToolbarLayout = new javax.swing.GroupLayout(complaintToolbar);
         complaintToolbar.setLayout(complaintToolbarLayout);
@@ -1545,22 +1323,10 @@ public class HomeResidentForm extends javax.swing.JFrame {
                     .addComponent(addComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(updateComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(deleteComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel37, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(detailComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel38, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(assignComplaintButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel39, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 94, Short.MAX_VALUE)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(detailComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel38))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 318, Short.MAX_VALUE)
                 .addComponent(searchComplaintField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         complaintToolbarLayout.setVerticalGroup(
@@ -1577,24 +1343,12 @@ public class HomeResidentForm extends javax.swing.JFrame {
             .addGroup(complaintToolbarLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(complaintToolbarLayout.createSequentialGroup()
-                        .addComponent(assignComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(complaintToolbarLayout.createSequentialGroup()
-                        .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(updateComplaintButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(addComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(deleteComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(detailComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(5, 5, 5)
-                        .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel35, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel37, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel38, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel39, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                    .addComponent(addComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(detailComplaintButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(8, 8, 8)
+                .addGroup(complaintToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel35, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel38, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         listComplaintPanel.setBackground(new java.awt.Color(0, 153, 153));
@@ -1679,7 +1433,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addGroup(authorizationToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(updateAuthorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel41))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 435, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 615, Short.MAX_VALUE)
                 .addComponent(searchAuthorizationField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         authorizationToolbarLayout.setVerticalGroup(
@@ -1750,48 +1504,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         searchFacilityField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         searchFacilityField.setText("Search...");
 
-        addFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        addFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/61658_add_green_plus_icon.png"))); // NOI18N
-        addFacilityButton.setContentAreaFilled(false);
-        addFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        addFacilityButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addFacilityButtonActionPerformed(evt);
-            }
-        });
-
-        updateFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        updateFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-update-48.png"))); // NOI18N
-        updateFacilityButton.setContentAreaFilled(false);
-        updateFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        updateFacilityButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateFacilityButtonActionPerformed(evt);
-            }
-        });
-
-        deleteFacilityButton.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-        deleteFacilityButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-delete-48.png"))); // NOI18N
-        deleteFacilityButton.setContentAreaFilled(false);
-        deleteFacilityButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteFacilityButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteFacilityButtonActionPerformed(evt);
-            }
-        });
-
-        jLabel40.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel40.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel40.setText("ADD");
-
-        jLabel42.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel42.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel42.setText("UPDATE");
-
-        jLabel43.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        jLabel43.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel43.setText("DELETE");
-
         toggleMenuLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         toggleMenuLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-menu-80.png"))); // NOI18N
         toggleMenuLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1821,22 +1533,10 @@ public class HomeResidentForm extends javax.swing.JFrame {
             .addGroup(facilityToolbarLayout.createSequentialGroup()
                 .addComponent(toggleMenuLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(addFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel40, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel42, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(updateFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(deleteFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel43, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(detailFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 186, Short.MAX_VALUE)
+                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(detailFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel44))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 395, Short.MAX_VALUE)
                 .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         facilityToolbarLayout.setVerticalGroup(
@@ -1844,27 +1544,20 @@ public class HomeResidentForm extends javax.swing.JFrame {
             .addGroup(facilityToolbarLayout.createSequentialGroup()
                 .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(facilityToolbarLayout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(facilityToolbarLayout.createSequentialGroup()
+                                .addGap(24, 24, 24)
+                                .addComponent(searchFacilityField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(facilityToolbarLayout.createSequentialGroup()
+                                .addGap(14, 14, 14)
+                                .addComponent(toggleMenuLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(facilityToolbarLayout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addComponent(toggleMenuLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(facilityToolbarLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(updateFacilityButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(addFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(detailFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(facilityToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel40, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel42, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel43, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addContainerGap()
+                        .addComponent(detailFacilityButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(2, 2, 2)
+                        .addComponent(jLabel44, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         listFacilityPanel.setBackground(new java.awt.Color(0, 153, 153));
@@ -1872,13 +1565,13 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
         listFacilityTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"A101", "Staff", "Car", "Unavailable", null, "092849284"},
-                {"A102", "Resident", "Bike", "Unavailable", null, "76482794723"},
-                {"B202", "Staff", "Bike", "Unavailable", null, "93875927394"},
-                {"C101", "Staff", "Car", "Available", null, "N/A"}
+                {"A101", "Staff", "Car", "Unavailable", "092849284"},
+                {"A102", "Resident", "Bike", "Unavailable", "76482794723"},
+                {"B202", "Staff", "Bike", "Unavailable", "93875927394"},
+                {"C101", "Staff", "Car", "Available", "N/A"}
             },
             new String [] {
-                "FacilityID", "Facility Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+                "ServiceID", "Service Name", "Manufacturer", "Unit", "Price"
             }
         ));
         listComplaintScroll2.setViewportView(listFacilityTable);
@@ -1888,7 +1581,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         listComplaintLabel2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         listComplaintLabel2.setForeground(new java.awt.Color(255, 255, 255));
         listComplaintLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        listComplaintLabel2.setText("LIST OF FACILITIES");
+        listComplaintLabel2.setText("LIST OF EXTERNAL SERVICES");
         listComplaintLabel2.setPreferredSize(new java.awt.Dimension(245, 40));
         listFacilityPanel.add(listComplaintLabel2, java.awt.BorderLayout.NORTH);
 
@@ -1987,7 +1680,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addGroup(invoiceToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(detailInvoiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel48))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 263, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 443, Short.MAX_VALUE)
                 .addComponent(searchInvoiceField, javax.swing.GroupLayout.PREFERRED_SIZE, 463, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         invoiceToolbarLayout.setVerticalGroup(
@@ -2020,13 +1713,13 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
         listInvoiceTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"A101", "Staff", "Car", "Unavailable", null, "092849284"},
-                {"A102", "Resident", "Bike", "Unavailable", null, "76482794723"},
-                {"B202", "Staff", "Bike", "Unavailable", null, "93875927394"},
-                {"C101", "Staff", "Car", "Available", null, "N/A"}
+                {"A101", null, "Staff", "Car", "Unavailable"},
+                {"A102", null, "Resident", "Bike", "Unavailable"},
+                {"B202", null, "Staff", "Bike", "Unavailable"},
+                {"C101", null, "Staff", "Car", "Available"}
             },
             new String [] {
-                "FacilityID", "Facility Name", "Manufacturer", "Unit", "Stock Quantity", "Price"
+                "InvoiceID", "ResidentID", "Created Date", "Total Fee", "Status"
             }
         ));
         listComplaintScroll3.setViewportView(listInvoiceTable);
@@ -2056,7 +1749,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addComponent(listInvoicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
         );
 
-        contentPanel.add(invoicePanel, "facility");
+        contentPanel.add(invoicePanel, "invoice");
 
         mainPanel.add(contentPanel, java.awt.BorderLayout.CENTER);
 
@@ -2073,19 +1766,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
             }
         });
 
-        profileButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        profileButton.setText("Profile");
-        profileButton.setContentAreaFilled(false);
-
-        authorizationButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        authorizationButton.setText("Authorization");
-        authorizationButton.setContentAreaFilled(false);
-        authorizationButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                authorizationButtonActionPerformed(evt);
-            }
-        });
-
         serviceFacilityButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         serviceFacilityButton.setText("Services & Facility");
         serviceFacilityButton.setContentAreaFilled(false);
@@ -2099,16 +1779,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         jLabel18.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icon/icons8-manager-80.png"))); // NOI18N
-        jLabel18.setText("Admin");
-
-        residentManagementButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        residentManagementButton.setText("Resident Management");
-        residentManagementButton.setContentAreaFilled(false);
-        residentManagementButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                residentManagementButtonActionPerformed(evt);
-            }
-        });
+        jLabel18.setText("Resident");
 
         complaintsButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         complaintsButton.setText("Complaints");
@@ -2116,15 +1787,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         complaintsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 complaintsButtonActionPerformed(evt);
-            }
-        });
-
-        homeButton.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        homeButton.setText("Home");
-        homeButton.setContentAreaFilled(false);
-        homeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                homeButtonActionPerformed(evt);
             }
         });
 
@@ -2141,7 +1803,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         serviceSub.setLayout(new javax.swing.BoxLayout(serviceSub, javax.swing.BoxLayout.Y_AXIS));
 
         jButton9.setFont(new java.awt.Font("Sans Serif Collection", 1, 15)); // NOI18N
-        jButton9.setText("services");
+        jButton9.setText("Internal Service");
         jButton9.setContentAreaFilled(false);
         jButton9.setMaximumSize(new java.awt.Dimension(242, 55));
         jButton9.setPreferredSize(new java.awt.Dimension(242, 55));
@@ -2153,7 +1815,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         serviceSub.add(jButton9);
 
         jButton10.setFont(new java.awt.Font("Sans Serif Collection", 1, 15)); // NOI18N
-        jButton10.setText("facility");
+        jButton10.setText("External Service");
         jButton10.setContentAreaFilled(false);
         jButton10.setMaximumSize(new java.awt.Dimension(242, 55));
         jButton10.setPreferredSize(new java.awt.Dimension(242, 55));
@@ -2181,22 +1843,22 @@ public class HomeResidentForm extends javax.swing.JFrame {
         menuPanel.setLayout(menuPanelLayout);
         menuPanelLayout.setHorizontalGroup(
             menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(complaintsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(profileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(authorizationButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(bookingButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(serviceSub, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(serviceFacilityButton, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
             .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(residentManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(homeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(logOutButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(menuPanelLayout.createSequentialGroup()
+                .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, menuPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jSeparator2)
-                    .addComponent(jSeparator3))
+                    .addComponent(serviceSub, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(bookingButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(serviceFacilityButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(menuPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jSeparator3, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addComponent(complaintsButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         menuPanelLayout.setVerticalGroup(
@@ -2205,10 +1867,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addComponent(jLabel18)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(3, 3, 3)
-                .addComponent(homeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(residentManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(parkingManagementButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -2219,11 +1877,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 .addComponent(serviceSub, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bookingButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(profileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(authorizationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 109, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 340, Short.MAX_VALUE)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(5, 5, 5)
                 .addComponent(logOutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2258,98 +1912,10 @@ public class HomeResidentForm extends javax.swing.JFrame {
         s.toggleMenu();
     }//GEN-LAST:event_jLabel13MouseClicked
 
-    private void addParkingSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addParkingSlotButtonActionPerformed
-        // TODO add your handling code here:
-        addParkingSlotButton.setBackground(Color.LIGHT_GRAY); // Set màu nền cho JButton
-        addParkingSlotButton.setContentAreaFilled(true);
-        AddParkingForm a = new AddParkingForm(this, true, parkingService); // 'this' là Frame cha
-        a.setVisible(true); // Code sẽ dừng ở đây cho đến khi dialog đóng
-        addParkingSlotButton.setContentAreaFilled(false);
-        this.updateTableParking();
-    }//GEN-LAST:event_addParkingSlotButtonActionPerformed
-
     private void toggleMenuLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabelMouseClicked
         // TODO add your handling code here:
         s.toggleMenu();
     }//GEN-LAST:event_toggleMenuLabelMouseClicked
-
-    private void deleteParkingSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteParkingSlotButtonActionPerformed
-        // TODO add your handling code here:
-        deleteParkingSlotButton.setContentAreaFilled(true); // Tạo hiệu ứng khi click vào nút
-        deleteParkingSlotButton.setBackground(Color.LIGHT_GRAY); // Tạo màu nền khi click vào
-    
-        int[] selectedRows = listParkingSlotTable.getSelectedRows();
-        if (selectedRows.length > 0) {
-            int confirm = JOptionPane.showConfirmDialog(null,
-                    "Are you sure you want to delete the selected slot(s)?",
-                    "Confirm Delete",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean deleteSuccess = false;
-
-                // Phải xóa từ dòng dưới lên (tránh lỗi index)
-                for (int i = selectedRows.length - 1; i >= 0; i--) {
-                    int row = selectedRows[i];
-                    Object slotNameObj = listParkingSlotTable.getValueAt(row, 0);
-                    if (slotNameObj != null) {
-                        String slotName = slotNameObj.toString();
-                        int result = parkingService.deleteParkingSlot(slotName);
-                        if (result > 0) {
-                            deleteSuccess = true;
-                        }
-                    }
-                }
-
-                // Sau khi xóa, cập nhật lại table
-                updateTableParking();
-                
-
-                if (deleteSuccess) {
-                    JOptionPane.showMessageDialog(null, "Delete successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Failed to delete the selected slot(s)!", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select at least one row to delete!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        // Quay lại trạng thái ban đầu của button
-        deleteParkingSlotButton.setContentAreaFilled(false);
-    }//GEN-LAST:event_deleteParkingSlotButtonActionPerformed
-
-    private void updateParkingSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateParkingSlotButtonActionPerformed
-        // TODO add your handling code here:
-        
-        updateParkingSlotButton.setBackground(Color.LIGHT_GRAY);
-        updateParkingSlotButton.setContentAreaFilled(true);
-
-        int selectedRow = listParkingSlotTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select one row to update!", "Error", JOptionPane.ERROR_MESSAGE);
-        } else if (listParkingSlotTable.getSelectedRowCount() > 1) {
-            JOptionPane.showMessageDialog(this, "You can only select one row to update!", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            // Tạo đối tượng ParkingSlot từ dữ liệu trên JTable
-            String slotName = listParkingSlotTable.getValueAt(selectedRow, 0).toString();
-            String slotType = listParkingSlotTable.getValueAt(selectedRow, 1).toString();
-            String vehicle = listParkingSlotTable.getValueAt(selectedRow, 2).toString();
-            String status = listParkingSlotTable.getValueAt(selectedRow, 3).toString();
-            String licensePlate = listParkingSlotTable.getValueAt(selectedRow, 4).toString();
-
-            ParkingSlot selectedSlot = new ParkingSlot(slotName, slotType, vehicle, status, licensePlate);
-
-            // Truyền cả đối tượng này cho form Update
-            UpdateParkingForm updateForm = new UpdateParkingForm(this, true, selectedSlot, parkingService);
-            updateForm.setVisible(true); // Hiển thị form update
-
-            // Sau khi form update đóng, cập nhật lại bảng
-            this.updateTableParking();
-        }
-
-        updateParkingSlotButton.setContentAreaFilled(false); // Trả lại trạng thái ban đầu cho nút
-    }//GEN-LAST:event_updateParkingSlotButtonActionPerformed
 
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
         // TODO add your handling code here:
@@ -2439,30 +2005,32 @@ public class HomeResidentForm extends javax.swing.JFrame {
         // TODO add your handling code here:
         int selectedRow = listFacilitiesSubscribiedTable.getSelectedRow();
         if (selectedRow == -1 || invoiceID.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dịch vụ trong hóa đơn để xóa.", "Chưa chọn dịch vụ", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a service from the invoice to delete.", "No Service Selected", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc muốn xóa dịch vụ đã chọn này?",
-                "Xác nhận xóa",
+                "Are you sure you want to delete the selected service?",
+                "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             int currentInvoiceId = Integer.parseInt(invoiceID.getText());
-            List<SubscribedFacility> currentCart = subscribedFacilityService.getByInvoiceId(currentInvoiceId);
-            SubscribedFacility itemToRemove = currentCart.get(selectedRow);
+            // Lấy ServiceID trực tiếp từ cột đầu tiên của hàng đã chọn
+            String serviceIdToRemove = listFacilitiesSubscribiedTable.getValueAt(selectedRow, 0).toString();
 
-            boolean success = subscribedFacilityService.deleteFacilityFromInvoice(itemToRemove.getInvoiceId(), itemToRemove.getServiceId());
+            // Gọi phương thức xóa với ID hóa đơn và ID dịch vụ chính xác
+            boolean success = subscribedFacilityService.deleteFacilityFromInvoice(currentInvoiceId, serviceIdToRemove);
 
             if (success) {
                 updateSubscribedFacilitiesTable();
                 handleInvoiceUpdate();
-                JOptionPane.showMessageDialog(this, "Đã xóa dịch vụ thành công!");
+                JOptionPane.showMessageDialog(this, "Service deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi: Xóa dịch vụ thất bại.", "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error: Failed to delete the service.", "Database Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+
     }//GEN-LAST:event_deleteSubscribedFacilitiesActionPerformed
 
     private void logOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logOutButtonActionPerformed
@@ -2495,16 +2063,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         showPanel(contentPanel, "parking");
     }//GEN-LAST:event_parkingManagementButtonActionPerformed
 
-    private void homeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_homeButtonActionPerformed
-        // TODO add your handling code here:
-        showPanel(contentPanel, "home");
-    }//GEN-LAST:event_homeButtonActionPerformed
-
-    private void residentManagementButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_residentManagementButtonActionPerformed
-        // TODO add your handling code here:
-        showPanel(contentPanel, "resident");
-    }//GEN-LAST:event_residentManagementButtonActionPerformed
-
     private void serviceFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_serviceFacilityButtonActionPerformed
         // TODO add your handling code here:
         serviceSub.setVisible(!serviceSub.isVisible());
@@ -2522,130 +2080,62 @@ public class HomeResidentForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_serviceFacilityButtonActionPerformed
 
-    private void authorizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_authorizationButtonActionPerformed
-        // TODO add your handling code here:
-        showPanel(contentPanel, "authorization");
-    }//GEN-LAST:event_authorizationButtonActionPerformed
-
-    private void addServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addServiceButtonActionPerformed
-        // TODO add your handling code here:
-        addServiceButton.setBackground(Color.LIGHT_GRAY);
-        addServiceButton.setContentAreaFilled(true);
-        
-        // Mở form thêm mới và truyền vào đối tượng service đã được khởi tạo
-        AddCompulsoryServiceForm addForm = new AddCompulsoryServiceForm(this, true, this.compulsoryServiceService);
-        addForm.setVisible(true); // Chờ cho đến khi dialog được đóng
-
-        addServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
-        updateServiceTable(); // Cập nhật lại bảng sau khi thêm
-        
-    }//GEN-LAST:event_addServiceButtonActionPerformed
-
-    private void updateServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateServiceButtonActionPerformed
-        // TODO add your handling code here:
-        updateServiceButton.setBackground(Color.LIGHT_GRAY);
-        updateServiceButton.setContentAreaFilled(true);
-
-        int selectedRow = listServiceTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a service to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
-        } else if (listServiceTable.getSelectedRowCount() > 1) {
-            JOptionPane.showMessageDialog(this, "Please select only one service to update.", "Multiple Selections", JOptionPane.WARNING_MESSAGE);
-        } else {
-            try {
-                // Lấy dữ liệu từ dòng đã chọn trong bảng
-                String serviceId = listServiceTable.getValueAt(selectedRow, 0).toString();
-                String serviceName = listServiceTable.getValueAt(selectedRow, 1).toString();
-                String providerId = listServiceTable.getValueAt(selectedRow, 2).toString();
-                String unit = listServiceTable.getValueAt(selectedRow, 3).toString();
-                BigDecimal price = new BigDecimal(listServiceTable.getValueAt(selectedRow, 4).toString());
-
-                // Tạo đối tượng CompulsoryService từ dữ liệu đã lấy
-                CompulsoryService serviceToUpdate = new CompulsoryService(serviceId, serviceName, providerId, unit, price);
-
-                // Mở form cập nhật và truyền đối tượng service cùng service instance
-                UpdateCompulsoryServiceForm updateForm = new UpdateCompulsoryServiceForm(this, true, serviceToUpdate, this.compulsoryServiceService);
-                updateForm.setVisible(true);
-
-                // Cập nhật lại bảng sau khi dialog đóng
-                updateServiceTable();
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error retrieving service data: " + e.getMessage(), "Data Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            }
-        }
-
-        updateServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
-    }//GEN-LAST:event_updateServiceButtonActionPerformed
-
-    private void deleteServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteServiceButtonActionPerformed
-        // TODO add your handling code here:
-        deleteServiceButton.setBackground(Color.LIGHT_GRAY);
-        deleteServiceButton.setContentAreaFilled(true);
-
-        int[] selectedRows = listServiceTable.getSelectedRows();
-
-        if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Please select at least one service to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
-        } else {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to delete the selected service(s)?",
-                    "Confirm Deletion",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean allSucceeded = true;
-                // Lặp ngược để tránh lỗi chỉ số khi xóa nhiều dòng
-                for (int i = selectedRows.length - 1; i >= 0; i--) {
-                    int modelRow = listServiceTable.convertRowIndexToModel(selectedRows[i]);
-                    String serviceId = listServiceTable.getModel().getValueAt(modelRow, 0).toString();
-                    
-                    if (!compulsoryServiceService.deleteService(serviceId)) {
-                        allSucceeded = false;
-                    }
-                }
-                
-                updateServiceTable(); // Cập nhật lại bảng
-                
-                if (allSucceeded) {
-                    JOptionPane.showMessageDialog(this, "Service(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Could not delete all selected services. Please check logs for details.", "Deletion Failed", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-        
-        deleteServiceButton.setContentAreaFilled(false); // Trả lại trạng thái cho nút
-    }//GEN-LAST:event_deleteServiceButtonActionPerformed
-
     private void toggleMenuLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel1MouseClicked
         // TODO add your handling code here:
     }//GEN-LAST:event_toggleMenuLabel1MouseClicked
 
     private void printInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printInvoiceButtonActionPerformed
         // TODO add your handling code here:
+        // 1. Kiểm tra xem có hóa đơn để xử lý không
         if (invoiceID.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No invoice to export to PDF.", "Information", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không có hóa đơn nào để xử lý.", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+    
+        // 2. Lấy và xác thực dữ liệu từ các trường trên form
+        int invoiceId;
+        double totalFee, cashReceivedValue = 0, changeReturnedValue = 0;
+        String status;
+    
+        try {
+            invoiceId = Integer.parseInt(invoiceID.getText());
+            totalFee = Double.parseDouble(totalBill.getText().replace(" ", ""));
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Lỗi định dạng số trên hóa đơn.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    
+        // 3. Xác định trạng thái và giá trị thanh toán
+        String cashReceivedText = cashReceived.getText().trim();
+        if (cashReceivedText.isEmpty()) {
+            status = "Pending"; // Nếu không nhập tiền mặt, trạng thái là "Chờ thanh toán"
+        } else {
+            try {
+                cashReceivedValue = Double.parseDouble(cashReceivedText.replace(" ", ""));
+                changeReturnedValue = Double.parseDouble(changeReturned.getText().replace(" ", ""));
+                status = "Completed"; // Nếu có nhập tiền mặt, trạng thái là "Hoàn thành"
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Số tiền nhận không hợp lệ.", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+    
+        // 4. Cập nhật thông tin thanh toán và trạng thái vào CSDL
+        invoiceService.finalizePayment(invoiceId, totalFee, cashReceivedValue, changeReturnedValue, status);
+    
+        // 5. Mở hộp thoại để người dùng chọn nơi lưu file PDF
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save PDF Invoice");
-        String suggestedFileName = "Invoice_" + invoiceID.getText() + ".pdf";
+        fileChooser.setDialogTitle("Lưu hóa đơn PDF");
+        String suggestedFileName = "Invoice_" + invoiceId + ".pdf";
         fileChooser.setSelectedFile(new java.io.File(suggestedFileName));
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("PDF Documents", "pdf");
-        fileChooser.setFileFilter(filter);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Documents", "pdf"));
 
-        int userSelection = fileChooser.showSaveDialog(this);
-
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            java.io.File fileToSave = fileChooser.getSelectedFile();
-            String filePath = fileToSave.getAbsolutePath();
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
             if (!filePath.toLowerCase().endsWith(".pdf")) {
                 filePath += ".pdf";
             }
-
+            // 6. Tạo và ghi nội dung vào file PDF (Giữ nguyên nội dung PDF)
             try {
                 Document document = new Document();
                 PdfWriter.getInstance(document, new FileOutputStream(filePath));
@@ -2667,16 +2157,13 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 document.add(new Paragraph("-------------------------------------------------------------------"));
                 document.add(new Paragraph(" "));
 
-                // Tạo một Map để tra cứu tên dịch vụ từ Service ID cho hiệu quả
                 Map<String, String> serviceNameMap = facilityService.getAllFacilities().stream()
                     .collect(Collectors.toMap(Facility::getServiceId, Facility::getServiceName));
 
-                // Tạo bảng PDF với 6 cột
                 PdfPTable table = new PdfPTable(6);
                 table.setWidthPercentage(100);
-                table.setWidths(new float[]{1.5f, 3f, 1.5f, 1.5f, 2f, 2f}); // Tùy chỉnh độ rộng cột
+                table.setWidths(new float[]{1.5f, 3f, 1.5f, 1.5f, 2f, 2f});
 
-                // Thêm header mới cho bảng
                 String[] headers = {"Service ID", "Service Name", "Quantity", "Unit", "Unit Price", "Line Total"};
                 for (String header : headers) {
                     PdfPCell headerCell = new PdfPCell(new Phrase(header, boldFont));
@@ -2684,16 +2171,14 @@ public class HomeResidentForm extends javax.swing.JFrame {
                     table.addCell(headerCell);
                 }
 
-                // Thêm các dòng dữ liệu
                 DefaultTableModel model = (DefaultTableModel) listFacilitiesSubscribiedTable.getModel();
                 for (int row = 0; row < model.getRowCount(); row++) {
                     String serviceId = model.getValueAt(row, 0).toString();
                     String serviceNameValue = serviceNameMap.getOrDefault(serviceId, "N/A");
                     
-                    table.addCell(new Phrase(serviceId, normalFont)); // Cột 1: Service ID
-                    table.addCell(new Phrase(serviceNameValue, normalFont)); // Cột 2: Service Name
+                    table.addCell(new Phrase(serviceId, normalFont));
+                    table.addCell(new Phrase(serviceNameValue, normalFont));
                     
-                    // Thêm các cột còn lại từ model của JTable
                     for (int col = 1; col < model.getColumnCount(); col++) {
                         table.addCell(new Phrase(model.getValueAt(row, col).toString(), normalFont));
                     }
@@ -2701,19 +2186,17 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 document.add(table);
                 document.add(new Paragraph("-------------------------------------------------------------------"));
 
-                // Thêm thông tin tổng tiền
                 document.add(new Paragraph("Total Fee: " + totalBill.getText() + " VND", boldFont));
                 document.add(new Paragraph("Cash Received: " + cashReceived.getText() + " VND", normalFont));
                 document.add(new Paragraph("Change Returned: " + changeReturned.getText() + " VND", normalFont));
                 document.add(new Paragraph(" "));
                 document.add(new Paragraph(" "));
 
-                // Thêm hình ảnh QR code
                 try {
                     java.net.URL qrUrl = getClass().getResource("/icon/QR.jpg");
                     if (qrUrl != null) {
                         com.itextpdf.text.Image qrImage = com.itextpdf.text.Image.getInstance(qrUrl);
-                        qrImage.scaleToFit(240, 240); // Đặt kích thước cho mã QR
+                        qrImage.scaleToFit(240, 240);
                         qrImage.setAlignment(com.itextpdf.text.Image.ALIGN_CENTER);
                         document.add(qrImage);
                     }
@@ -2726,13 +2209,15 @@ public class HomeResidentForm extends javax.swing.JFrame {
                 
                 JOptionPane.showMessageDialog(this, "PDF invoice exported successfully!\nSaved at: " + filePath, "Success", JOptionPane.INFORMATION_MESSAGE);
 
-                resetInvoiceFields();
-
             } catch (DocumentException | IOException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error creating PDF file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    
+        // 7. Làm mới giao diện sau khi hoàn tất
+        resetInvoiceFields();
+        updateInvoiceTable();
     }//GEN-LAST:event_printInvoiceButtonActionPerformed
 
     private void addComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addComplaintButtonActionPerformed
@@ -2744,84 +2229,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         addComplaintButton.setContentAreaFilled(false);
         this.updateComplaintsTable();
     }//GEN-LAST:event_addComplaintButtonActionPerformed
-
-    private void updateComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateComplaintButtonActionPerformed
-        // TODO add your handling code here:
-        updateComplaintButton.setBackground(Color.LIGHT_GRAY);
-        updateComplaintButton.setContentAreaFilled(true);
-
-        int selectedRow = listComplaintTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select one complaint to update.", "Error", JOptionPane.ERROR_MESSAGE);
-        } else if (listComplaintTable.getSelectedRowCount() > 1) {
-            JOptionPane.showMessageDialog(this, "Please select only one complaint to update.", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            String complaintId = listComplaintTable.getValueAt(selectedRow, 0).toString();
-
-            // Tìm đối tượng Complaint đầy đủ từ service
-            Complaint complaintToUpdate = complaintService.getAllComplaints().stream()
-                    .filter(c -> c.getComplaintId().equals(complaintId))
-                    .findFirst()
-                    .orElse(null);
-
-            if (complaintToUpdate != null) {
-                // Truyền đối tượng complaint và service vào form cập nhật
-                UpdateComplaintForm updateForm = new UpdateComplaintForm(this, true, complaintToUpdate, complaintService);
-                updateForm.setVisible(true);
-
-                // Sau khi form đóng, làm mới lại bảng
-                updateComplaintsTable();
-            } else {
-                JOptionPane.showMessageDialog(this, "Could not find the selected complaint details.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        updateComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
-        
-    }//GEN-LAST:event_updateComplaintButtonActionPerformed
-
-    private void deleteComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteComplaintButtonActionPerformed
-        // TODO add your handling code here:
-        deleteComplaintButton.setContentAreaFilled(true);
-        deleteComplaintButton.setBackground(Color.LIGHT_GRAY);
-
-        int[] selectedRows = listComplaintTable.getSelectedRows();
-        if (selectedRows.length > 0) {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to delete the selected complaint(s)?",
-                    "Confirm Delete",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean allDeleted = true;
-                // Lặp ngược để tránh lỗi chỉ số khi xóa nhiều dòng
-                for (int i = selectedRows.length - 1; i >= 0; i--) {
-                    int row = selectedRows[i];
-                    // Lấy ID của phản ánh từ cột đầu tiên (index 0)
-                    String complaintId = listComplaintTable.getValueAt(row, 0).toString();
-                    
-                    if (!complaintService.deleteComplaint(complaintId)) {
-                        allDeleted = false; // Đánh dấu nếu có bất kỳ lỗi xóa nào
-                    }
-                }
-
-                // Cập nhật lại bảng để hiển thị thay đổi
-                updateComplaintsTable();
-
-                if (allDeleted) {
-                    JOptionPane.showMessageDialog(this, "Complaint(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Could not delete all selected complaints. Please check the logs.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Please select at least one complaint to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
-        }
-        
-        deleteComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
-        
-    }//GEN-LAST:event_deleteComplaintButtonActionPerformed
 
     private void toggleMenuLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel2MouseClicked
         // TODO add your handling code here:
@@ -2864,44 +2271,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
         detailComplaintButton.setContentAreaFilled(false); // Reset lại giao diện nút
     }//GEN-LAST:event_detailComplaintButtonActionPerformed
-
-    private void assignComplaintButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_assignComplaintButtonActionPerformed
-        // TODO add your handling code here:
-        assignComplaintButton.setBackground(java.awt.Color.LIGHT_GRAY);
-        assignComplaintButton.setContentAreaFilled(true);
-
-        int selectedRow = listComplaintTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select one complaint to assign.", "Error", JOptionPane.ERROR_MESSAGE);
-        } else if (listComplaintTable.getSelectedRowCount() > 1) {
-            JOptionPane.showMessageDialog(this, "Please select only one complaint.", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            String complaintId = listComplaintTable.getValueAt(selectedRow, 0).toString();
-            
-            Complaint selectedComplaint = complaintService.getAllComplaints().stream()
-                .filter(c -> c.getComplaintId().equals(complaintId))
-                .findFirst()
-                .orElse(null);
-
-            if (selectedComplaint != null) {
-                String currentStatus = selectedComplaint.getStatus();
-                if ("In Progress".equalsIgnoreCase(currentStatus) || "Resolved".equalsIgnoreCase(currentStatus) || "Closed".equalsIgnoreCase(currentStatus)) {
-                    JOptionPane.showMessageDialog(this, "This complaint has already been assigned or completed.", "Cannot Assign", JOptionPane.WARNING_MESSAGE);
-                } else {
-                    // Mở form Assign và truyền các service đã được đổi tên
-                    AssignComplaintForm assignForm = new AssignComplaintForm(this, true, selectedComplaint, staffService, assignmentService);
-                    assignForm.setVisible(true);
-
-                    // Cập nhật lại bảng chính sau khi form đóng
-                    updateComplaintsTable();
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Could not find complaint details.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-        assignComplaintButton.setContentAreaFilled(false);
-    }//GEN-LAST:event_assignComplaintButtonActionPerformed
 
     private void toggleMenuLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel3MouseClicked
         // TODO add your handling code here:
@@ -2946,75 +2315,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
         showPanel(contentPanel, "booking");
     }//GEN-LAST:event_bookingButtonActionPerformed
 
-    private void updateFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateFacilityButtonActionPerformed
-        // TODO add your handling code here:
-        updateFacilityButton.setBackground(Color.LIGHT_GRAY);
-        updateFacilityButton.setContentAreaFilled(true);
-
-        int selectedRow = listFacilityTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a facility to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
-        } else if (listFacilityTable.getSelectedRowCount() > 1) {
-            JOptionPane.showMessageDialog(this, "Please select only one facility to update.", "Multiple Selections", JOptionPane.WARNING_MESSAGE);
-        } else {
-            try {
-                String facilityId = listFacilityTable.getValueAt(selectedRow, 0).toString();
-                Facility facilityToUpdate = facilityService.getAllFacilities().stream()
-                        .filter(f -> f.getServiceId().equals(facilityId))
-                        .findFirst()
-                        .orElse(null);
-
-                if (facilityToUpdate != null) {
-                    UpdateFacilityForm updateForm = new UpdateFacilityForm(this, true, facilityToUpdate, this.facilityService);
-                    updateForm.setVisible(true);
-                    updateFacilityTable();
-                } else {
-                     JOptionPane.showMessageDialog(this, "Could not find details for the selected facility.", "Data Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error retrieving facility data: " + e.getMessage(), "Data Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            }
-        }
-        updateFacilityButton.setContentAreaFilled(false);
-    }//GEN-LAST:event_updateFacilityButtonActionPerformed
-
-    private void deleteFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFacilityButtonActionPerformed
-        // TODO add your handling code here:
-        deleteFacilityButton.setBackground(Color.LIGHT_GRAY);
-        deleteFacilityButton.setContentAreaFilled(true);
-
-        int[] selectedRows = listFacilityTable.getSelectedRows();
-        if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Please select at least one facility to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
-        } else {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Are you sure you want to delete the selected facility(s)? This may affect existing invoices.",
-                    "Confirm Deletion",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean allSucceeded = true;
-                for (int i = selectedRows.length - 1; i >= 0; i--) {
-                    int modelRow = listFacilityTable.convertRowIndexToModel(selectedRows[i]);
-                    String facilityId = listFacilityTable.getModel().getValueAt(modelRow, 0).toString();
-                    if (!facilityService.deleteFacility(facilityId)) {
-                        allSucceeded = false;
-                    }
-                }
-                
-                updateFacilityTable();
-                
-                if (allSucceeded) {
-                    JOptionPane.showMessageDialog(this, "Facility(s) deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Could not delete all selected facilities.", "Deletion Failed", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-        deleteFacilityButton.setContentAreaFilled(false);
-    }//GEN-LAST:event_deleteFacilityButtonActionPerformed
-
     private void toggleMenuLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel4MouseClicked
         // TODO add your handling code here:
     }//GEN-LAST:event_toggleMenuLabel4MouseClicked
@@ -3046,24 +2346,87 @@ public class HomeResidentForm extends javax.swing.JFrame {
         detailFacilityButton.setContentAreaFilled(false);
     }//GEN-LAST:event_detailFacilityButtonActionPerformed
 
-    private void addFacilityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addFacilityButtonActionPerformed
-        // TODO add your handling code here:
-        addFacilityButton.setBackground(Color.LIGHT_GRAY);
-        addFacilityButton.setContentAreaFilled(true);
-        
-        AddFacilityForm addForm = new AddFacilityForm(this, true, this.facilityService);
-        addForm.setVisible(true);
-
-        addFacilityButton.setContentAreaFilled(false);
-        updateFacilityTable();
-    }//GEN-LAST:event_addFacilityButtonActionPerformed
-
     private void updateInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateInvoiceButtonActionPerformed
         // TODO add your handling code here:
+        int selectedRow = listInvoiceTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an invoice to update.", "No Invoice Selected", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Get status from column index 4
+            String status = listInvoiceTable.getValueAt(selectedRow, 4).toString();
+
+            // Check invoice status
+            if (!"Pending".equalsIgnoreCase(status)) {
+                JOptionPane.showMessageDialog(this, "Only invoices with status 'Pending' can be updated.", "Cannot Update", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Continue if status is "Pending"
+            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
+            Invoice invoiceToUpdate = invoiceService.getAllInvoices().stream()
+                    .filter(inv -> inv.getInvoiceId() == invoiceId)
+                    .findFirst().orElse(null);
+
+            if (invoiceToUpdate != null) {
+                UpdateInvoiceForm updateForm = new UpdateInvoiceForm(this, true, invoiceToUpdate, invoiceService);
+                updateForm.setVisible(true);
+                updateInvoiceTable(); // Refresh table after closing update form
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading invoice details.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+
     }//GEN-LAST:event_updateInvoiceButtonActionPerformed
 
     private void deleteInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteInvoiceButtonActionPerformed
         // TODO add your handling code here:
+        // Lấy tất cả các hàng đang được chọn trong bảng hóa đơn
+        int[] selectedRows = listInvoiceTable.getSelectedRows();
+
+        // Kiểm tra xem người dùng đã chọn hàng nào chưa
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Please select at least one invoice to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Hiển thị hộp thoại xác nhận với số lượng hóa đơn sẽ bị xóa
+        int confirm = JOptionPane.showConfirmDialog(this, 
+                "Are you sure you want to delete the " + selectedRows.length + " selected invoice(s)? This action cannot be undone.", 
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        
+        // Nếu người dùng đồng ý xóa
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean allSucceeded = true;
+            java.util.List<Integer> invoiceIdsToDelete = new java.util.ArrayList<>();
+
+            // Thu thập ID của tất cả các hóa đơn cần xóa vào một danh sách
+            for (int row : selectedRows) {
+                // Lấy ID hóa đơn từ cột đầu tiên của hàng đã chọn
+                int invoiceId = (int) listInvoiceTable.getValueAt(row, 0);
+                invoiceIdsToDelete.add(invoiceId);
+            }
+            
+            // Thực hiện xóa cho từng hóa đơn trong danh sách
+            for (int invoiceId : invoiceIdsToDelete) {
+                if (!invoiceService.deleteInvoice(invoiceId)) {
+                    allSucceeded = false; // Đánh dấu nếu có bất kỳ thao tác xóa nào thất bại
+                }
+            }
+
+            // Cập nhật lại bảng sau khi xóa xong
+            updateInvoiceTable();
+
+            // Hiển thị thông báo kết quả
+            if (allSucceeded) {
+                JOptionPane.showMessageDialog(this, "Selected invoice(s) deleted successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete one or more selected invoices.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_deleteInvoiceButtonActionPerformed
 
     private void toggleMenuLabel5MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_toggleMenuLabel5MouseClicked
@@ -3072,6 +2435,25 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
     private void detailInvoiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailInvoiceButtonActionPerformed
         // TODO add your handling code here:
+        int selectedRow = listInvoiceTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an invoice to view details.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        try {
+            int invoiceId = (int) listInvoiceTable.getValueAt(selectedRow, 0);
+            Invoice invoiceToShow = invoiceService.getAllInvoices().stream()
+                    .filter(inv -> inv.getInvoiceId() == invoiceId)
+                    .findFirst().orElse(null);
+            
+            if (invoiceToShow != null) {
+                DetailInvoiceForm detailForm = new DetailInvoiceForm(this, true, invoiceToShow);
+                detailForm.setVisible(true);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading invoice details.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_detailInvoiceButtonActionPerformed
     
     /**
@@ -3107,7 +2489,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                HomeResidentForm h = new HomeResidentForm("CD001");
+                HomeResidentForm h = new HomeResidentForm("CD006");
                 h.setExtendedState(JFrame.MAXIMIZED_BOTH); // Phóng to toàn màn hình
                 h.setLocationRelativeTo(null); 
                 h.setVisible(true);
@@ -3117,11 +2499,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addComplaintButton;
-    private javax.swing.JButton addFacilityButton;
-    private javax.swing.JButton addParkingSlotButton;
-    private javax.swing.JButton addServiceButton;
-    private javax.swing.JButton assignComplaintButton;
-    private javax.swing.JButton authorizationButton;
     private javax.swing.JPanel authorizationPanel;
     private javax.swing.JPanel authorizationToolbar;
     private javax.swing.JButton bookFacilities;
@@ -3133,34 +2510,23 @@ public class HomeResidentForm extends javax.swing.JFrame {
     private javax.swing.JPanel complaintToolbar;
     private javax.swing.JButton complaintsButton;
     private javax.swing.JPanel contentPanel;
-    private javax.swing.JButton deleteComplaintButton;
-    private javax.swing.JButton deleteFacilityButton;
     private javax.swing.JButton deleteInvoiceButton;
-    private javax.swing.JButton deleteParkingSlotButton;
-    private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteSubscribedFacilities;
     private javax.swing.JTextArea descriptionFacilities;
     private javax.swing.JButton detailComplaintButton;
     private javax.swing.JButton detailFacilityButton;
     private javax.swing.JButton detailInvoiceButton;
-    private javax.swing.JButton exportParkingSlotsButton;
-    private javax.swing.JButton exportServiceButton;
     private javax.swing.JPanel facilityPanel;
     private javax.swing.JPanel facilityToolbar;
-    private javax.swing.JButton homeButton;
     private javax.swing.JPanel homePanel;
     private javax.swing.JTextField invoiceID;
     private javax.swing.JPanel invoicePanel;
     private javax.swing.JPanel invoiceToolbar;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton9;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
@@ -3176,19 +2542,9 @@ public class HomeResidentForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
-    private javax.swing.JLabel jLabel31;
-    private javax.swing.JLabel jLabel32;
-    private javax.swing.JLabel jLabel33;
-    private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
-    private javax.swing.JLabel jLabel36;
-    private javax.swing.JLabel jLabel37;
     private javax.swing.JLabel jLabel38;
-    private javax.swing.JLabel jLabel39;
-    private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
-    private javax.swing.JLabel jLabel42;
-    private javax.swing.JLabel jLabel43;
     private javax.swing.JLabel jLabel44;
     private javax.swing.JLabel jLabel46;
     private javax.swing.JLabel jLabel47;
@@ -3244,8 +2600,6 @@ public class HomeResidentForm extends javax.swing.JFrame {
     private javax.swing.JTextField phoneNumber;
     private javax.swing.JTextField price;
     private javax.swing.JButton printInvoiceButton;
-    private javax.swing.JButton profileButton;
-    private javax.swing.JButton residentManagementButton;
     private javax.swing.JPanel residentPanel;
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JTextField searchAuthorizationField;
@@ -3269,11 +2623,7 @@ public class HomeResidentForm extends javax.swing.JFrame {
     private javax.swing.JLabel toggleMenuLabel5;
     private javax.swing.JTextField totalBill;
     private javax.swing.JButton updateAuthorizationButton;
-    private javax.swing.JButton updateComplaintButton;
-    private javax.swing.JButton updateFacilityButton;
     private javax.swing.JButton updateInvoiceButton;
-    private javax.swing.JButton updateParkingSlotButton;
-    private javax.swing.JButton updateServiceButton;
     // End of variables declaration//GEN-END:variables
 
 }

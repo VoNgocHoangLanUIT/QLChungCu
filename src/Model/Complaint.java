@@ -18,18 +18,20 @@ public class Complaint {
     private Date complaintDate; // Tương ứng với cột ngay_phan_anh
     private String status;
     private String description;
+    private boolean deleted; // Thuộc tính mới cho soft delete
 
     // Constructors
     public Complaint() {
     }
 
-    public Complaint(String complaintId, String title, String apartmentId, Date complaintDate, String status, String description) {
+    public Complaint(String complaintId, String title, String apartmentId, Date complaintDate, String status, String description, boolean deleted) {
         this.complaintId = complaintId;
         this.title = title;
         this.apartmentId = apartmentId;
         this.complaintDate = complaintDate;
         this.status = status;
         this.description = description;
+        this.deleted = deleted;
     }
 
     // Getters and Setters
@@ -80,5 +82,12 @@ public class Complaint {
     public void setDescription(String description) {
         this.description = description;
     }
-}
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+}

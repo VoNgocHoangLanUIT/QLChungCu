@@ -7,7 +7,8 @@ public class Facility {
     private String unit;
     private String stockQuantity;
     private double price;
-    private String description; 
+    private String description;
+    private boolean deleted; // Thuộc tính mới cho soft delete
 
     // Constructors
     public Facility() {}
@@ -20,7 +21,8 @@ public class Facility {
         this.unit = unit;
         this.stockQuantity = stockQuantity;
         this.price = price;
-        this.description = description; 
+        this.description = description;
+        this.deleted = false; // Mặc định là chưa xóa
     }
 
     // --- Getters and Setters ---
@@ -44,4 +46,7 @@ public class Facility {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 }

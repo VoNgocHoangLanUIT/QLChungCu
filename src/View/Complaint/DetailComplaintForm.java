@@ -29,7 +29,7 @@ public class DetailComplaintForm extends javax.swing.JDialog {
         complaintTitleField.setText(complaintToUpdate.getTitle());
         complaintByField.setText(complaintToUpdate.getApartmentId());
         descriptionField.setText(complaintToUpdate.getDescription());
-        
+        statusComboBox.setSelectedItem(complaintToUpdate.getStatus());
         String fileName = complaintIDField.getText().trim();
         String path = "/icon/" + fileName + ".jpg";
 
@@ -119,7 +119,7 @@ public class DetailComplaintForm extends javax.swing.JDialog {
         descriptionField.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         descriptionField.setFocusable(false);
 
-        statusComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Available", "Unavailable" }));
+        statusComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Pending", "In Progress", "Resolved", "Closed" }));
         statusComboBox.setEnabled(false);
         statusComboBox.setFocusable(false);
 

@@ -16,13 +16,13 @@ import java.util.List;
 public class ComplaintDAO {
 
     /**
-     * Lấy tất cả các phản ánh từ cơ sở dữ liệu.
+     * Lấy tất cả các phản ánh chưa bị xóa từ cơ sở dữ liệu.
      * @return Danh sách các đối tượng Complaint.
      */
     public List<Complaint> getAllComplaints() {
         List<Complaint> complaints = new ArrayList<>();
-        // Lấy các cột tương ứng với các thuộc tính của lớp Complaint
-        String sql = "SELECT ma_phan_anh, tieu_de, ma_can_ho, ngay_phan_anh, trang_thai, mo_ta FROM PhanAnh ORDER BY ngay_phan_anh DESC";
+        // Sửa đổi câu lệnh SQL để chỉ lấy các phản ánh có da_xoa = 0
+        String sql = "SELECT ma_phan_anh, tieu_de, ma_can_ho, ngay_phan_anh, trang_thai, mo_ta, da_xoa FROM PhanAnh WHERE da_xoa = 0 ORDER BY ngay_phan_anh DESC";
 
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -36,6 +36,8 @@ public class ComplaintDAO {
                 complaint.setComplaintDate(rs.getDate("ngay_phan_anh"));
                 complaint.setStatus(rs.getString("trang_thai"));
                 complaint.setDescription(rs.getString("mo_ta"));
+                // Lấy giá trị của cột da_xoa
+                complaint.setDeleted(rs.getInt("da_xoa") == 1);
                 complaints.add(complaint);
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -50,7 +52,8 @@ public class ComplaintDAO {
      * @return true nếu thêm thành công, false nếu thất bại.
      */
     public boolean addComplaint(Complaint complaint) {
-        String sql = "INSERT INTO PhanAnh (ma_phan_anh, tieu_de, ma_can_ho, trang_thai, mo_ta) VALUES (?, ?, ?, ?, ?)";
+        // Cập nhật câu lệnh INSERT để thêm giá trị cho cột da_xoa (mặc định là 0)
+        String sql = "INSERT INTO PhanAnh (ma_phan_anh, tieu_de, ma_can_ho, trang_thai, mo_ta, da_xoa) VALUES (?, ?, ?, ?, ?, 0)";
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -68,9 +71,8 @@ public class ComplaintDAO {
     }
 
     /**
-     * Cập nhật trạng thái của một phản ánh.
-     * @param complaintId Mã của phản ánh cần cập nhật.
-     * @param newStatus Trạng thái mới.
+     * Cập nhật thông tin của một phản ánh.
+     * @param complaint Đối tượng Complaint chứa thông tin cần cập nhật.
      * @return true nếu cập nhật thành công, false nếu thất bại.
      */
     public boolean updateComplaint(Complaint complaint) {
@@ -107,12 +109,13 @@ public class ComplaintDAO {
     }
 
     /**
-     * Xóa một phản ánh khỏi cơ sở dữ liệu.
+     * "Xóa mềm" một phản ánh bằng cách cập nhật cột da_xoa = 1.
      * @param complaintId Mã của phản ánh cần xóa.
-     * @return true nếu xóa thành công, false nếu thất bại.
+     * @return true nếu "xóa" thành công, false nếu thất bại.
      */
     public boolean deleteComplaint(String complaintId) {
-        String sql = "DELETE FROM PhanAnh WHERE ma_phan_anh = ?";
+        // Thay đổi câu lệnh từ DELETE sang UPDATE để thực hiện soft delete
+        String sql = "UPDATE PhanAnh SET da_xoa = 1 WHERE ma_phan_anh = ?";
         try (Connection conn = ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 

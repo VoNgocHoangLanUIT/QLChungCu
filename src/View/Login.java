@@ -40,7 +40,7 @@ public class Login extends javax.swing.JFrame {
         // Custom UI
         setLocationRelativeTo(null);
         JLabel label = jLabel2;
-        ImageIcon icon = new ImageIcon(getClass().getResource("/icon/apartment1.jpg"));
+        ImageIcon icon = new ImageIcon(getClass().getResource("/icon/apartment.png"));
         Image img = icon.getImage().getScaledInstance(label.getWidth(), label.getHeight(), Image.SCALE_SMOOTH);
         label.setIcon(new ImageIcon(img));
         
@@ -96,7 +96,9 @@ public class Login extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jPanel1.setBackground(new java.awt.Color(204, 204, 255));
+        jPanel1.setBackground(new java.awt.Color(255, 153, 255));
+
+        jLabel2.setBackground(new java.awt.Color(153, 204, 255));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
