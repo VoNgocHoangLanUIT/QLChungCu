@@ -1,9 +1,3 @@
-# 🏢 Condominium Management System
-
-**📅 Duration:** Feb 2025 – Present  
-**🛠 Technologies:** Java Swing, JDBC, Oracle, StarUML, Role-Based Access Control (RBAC)
-
----
 
 ## 🏢 TalentHub - Hệ thống Quản lý Chung cư
 TalentHub là một ứng dụng desktop toàn diện được phát triển để hợp lý hóa và số hóa các hoạt động thiết yếu của một khu chung cư, giúp ban quản lý và cư dân tương tác hiệu quả và minh bạch.
